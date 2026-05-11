@@ -150,3 +150,118 @@ def test_uninstall_unknown_skill_returns_404(client, db_session):
 
     response = client.delete("/api/skills/nonexistent_skill/install", headers=headers)
     assert response.status_code == 404
+
+
+def test_hrbp_created_skill_is_private_to_creator(client, db_session):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    hrbp_resp = client.post("/api/auth/login", json={"email": "hrbp@example.com", "password": "password123"})
+    admin_resp = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "password123"})
+    hrbp_headers = {"Authorization": f"Bearer {hrbp_resp.json()['access_token']}"}
+    admin_headers = {"Authorization": f"Bearer {admin_resp.json()['access_token']}"}
+
+    create_resp = client.post(
+        "/api/skills",
+        headers=hrbp_headers,
+        json={
+            "skill_id": "my_private_jd",
+            "name": "My Private JD",
+            "description": "Private JD skill",
+            "category": "recruitment",
+            "mock_tool_name": "generate_jd",
+        },
+    )
+    assert create_resp.status_code == 200
+    created = create_resp.json()
+    assert created["visibility"] == "private"
+    assert created["source"] == "user"
+
+    hrbp_list = client.get("/api/skills", headers=hrbp_headers).json()
+    assert "my_private_jd" in {s["skill_id"] for s in hrbp_list}
+
+    admin_list = client.get("/api/skills", headers=admin_headers).json()
+    assert "my_private_jd" not in {s["skill_id"] for s in admin_list}
+
+
+def test_admin_created_shared_skill_is_visible_to_everyone(client, db_session):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    hrbp_resp = client.post("/api/auth/login", json={"email": "hrbp@example.com", "password": "password123"})
+    admin_resp = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "password123"})
+    hrbp_headers = {"Authorization": f"Bearer {hrbp_resp.json()['access_token']}"}
+    admin_headers = {"Authorization": f"Bearer {admin_resp.json()['access_token']}"}
+
+    create_resp = client.post(
+        "/api/skills",
+        headers=admin_headers,
+        json={
+            "skill_id": "shared_jd",
+            "name": "Shared JD",
+            "description": "Shared JD skill",
+            "category": "recruitment",
+            "mock_tool_name": "generate_jd",
+            "visibility": "shared",
+        },
+    )
+    assert create_resp.status_code == 200
+    assert create_resp.json()["visibility"] == "shared"
+
+    hrbp_list = client.get("/api/skills", headers=hrbp_headers).json()
+    shared = next(s for s in hrbp_list if s["skill_id"] == "shared_jd")
+    assert shared["visibility"] == "shared"
+
+
+def test_hrbp_cannot_create_shared_skill(client, db_session):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    hrbp_resp = client.post("/api/auth/login", json={"email": "hrbp@example.com", "password": "password123"})
+    headers = {"Authorization": f"Bearer {hrbp_resp.json()['access_token']}"}
+
+    response = client.post(
+        "/api/skills",
+        headers=headers,
+        json={
+            "skill_id": "bad_shared",
+            "name": "Bad Shared",
+            "mock_tool_name": "generate_jd",
+            "visibility": "shared",
+        },
+    )
+    assert response.status_code == 403
+
+
+def test_user_can_update_and_delete_own_private_skill(client, db_session):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    hrbp_resp = client.post("/api/auth/login", json={"email": "hrbp@example.com", "password": "password123"})
+    headers = {"Authorization": f"Bearer {hrbp_resp.json()['access_token']}"}
+
+    client.post(
+        "/api/skills",
+        headers=headers,
+        json={"skill_id": "editable_private", "name": "Editable", "mock_tool_name": "generate_jd"},
+    )
+
+    update_resp = client.patch(
+        "/api/skills/editable_private",
+        headers=headers,
+        json={"name": "Edited Private Skill"},
+    )
+    assert update_resp.status_code == 200
+    assert update_resp.json()["name"] == "Edited Private Skill"
+
+    delete_resp = client.delete("/api/skills/editable_private", headers=headers)
+    assert delete_resp.status_code == 204
+
+    skill_ids = {s["skill_id"] for s in client.get("/api/skills", headers=headers).json()}
+    assert "editable_private" not in skill_ids
+
+
+def test_system_skill_cannot_be_deleted(client, db_session):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    admin_resp = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "password123"})
+    headers = {"Authorization": f"Bearer {admin_resp.json()['access_token']}"}
+
+    response = client.delete("/api/skills/generate_jd", headers=headers)
+    assert response.status_code == 400

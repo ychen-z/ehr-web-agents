@@ -33,7 +33,7 @@ cp .env.example .env
 | `MYSQL_USER` | MySQL user | `ehr_agents` |
 | `MYSQL_PASSWORD` | MySQL password | `ehr_agents` |
 | `JWT_SECRET` | Secret for signing auth tokens | (required) |
-| `CORS_ORIGINS` | Allowed frontend origins | `http://localhost:5173` |
+| `CORS_ORIGINS` | Allowed frontend origins | `http://localhost:5173,http://127.0.0.1:5173` |
 | `DEEPSEEK_API_KEY` | DeepSeek API key | (required for real model calls) |
 | `DEEPSEEK_MODEL` | DeepSeek model name | `deepseek-chat` |
 | `OPENAI_API_KEY` | OpenAI API key | (required for real model calls) |
@@ -59,7 +59,7 @@ cd apps/api
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8010
 ```
 
 ### 4. Frontend (Web)
@@ -67,10 +67,17 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 cd apps/web
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5173`. The web app points to `http://127.0.0.1:8010` by default through `apps/web/.env.example`.
+
+If login returns `404` or `405`, another service is likely using the API port. Check with:
+
+```bash
+lsof -nP -iTCP:8010 -sTCP:LISTEN
+```
 
 ## Test Accounts
 
