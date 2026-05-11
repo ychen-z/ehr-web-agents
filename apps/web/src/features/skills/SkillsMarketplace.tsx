@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import {
+  createSkill,
+  deleteSkill,
   fetchSkills,
   installSkill,
   uninstallSkill,
+  updateSkill,
   type SkillResponse,
 } from "@/features/skills/skillsApi";
+import { useAuth } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api";
 
 interface SkillsMarketplaceProps {
@@ -18,11 +22,15 @@ export default function SkillsMarketplace({
   onClose,
   onSkillChange,
 }: SkillsMarketplaceProps) {
+  const { user } = useAuth();
   const [skills, setSkills] = useState<SkillResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [draftVisibility, setDraftVisibility] = useState<"private" | "shared">("private");
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +92,54 @@ export default function SkillsMarketplace({
     },
     [onClose],
   );
+
+  const handleCreateOrUpdate = useCallback(async () => {
+    const name = draftName.trim();
+    if (!name) return;
+    setToggleError(null);
+    const generatedSkillId = name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    try {
+      if (editingSkillId) {
+        await updateSkill(editingSkillId, {
+          name,
+          visibility: user?.role === "admin" ? draftVisibility : "private",
+        });
+      } else {
+        await createSkill({
+          skill_id: generatedSkillId || `skill_${Date.now()}`,
+          name,
+          description: "Custom recruitment skill",
+          category: "recruitment",
+          mock_tool_name: "generate_jd",
+          visibility: user?.role === "admin" ? draftVisibility : "private",
+        });
+      }
+      setDraftName("");
+      setDraftVisibility("private");
+      setEditingSkillId(null);
+      await load();
+      onSkillChange();
+    } catch (err) {
+      setToggleError(err instanceof ApiError ? err.message : "Failed to save skill.");
+    }
+  }, [draftName, draftVisibility, editingSkillId, load, onSkillChange, user?.role]);
+
+  const handleEdit = useCallback((skill: SkillResponse) => {
+    setEditingSkillId(skill.skill_id);
+    setDraftName(skill.name);
+    setDraftVisibility(skill.visibility);
+  }, []);
+
+  const handleDelete = useCallback(async (skill: SkillResponse) => {
+    setToggleError(null);
+    try {
+      await deleteSkill(skill.skill_id);
+      await load();
+      onSkillChange();
+    } catch (err) {
+      setToggleError(err instanceof ApiError ? err.message : "Failed to delete skill.");
+    }
+  }, [load, onSkillChange]);
 
   if (!open) return null;
 
@@ -150,6 +206,59 @@ export default function SkillsMarketplace({
                   {toggleError}
                 </div>
               )}
+              <div className="marketplace-editor">
+                <div>
+                  <h3 className="marketplace-editor-title">
+                    {editingSkillId ? "Edit Skill" : "Create Skill"}
+                  </h3>
+                  <p className="marketplace-editor-help">
+                    Personal skills stay private. Admin shared skills are visible to everyone.
+                  </p>
+                </div>
+                <label className="marketplace-editor-field">
+                  <span>Skill name</span>
+                  <input
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    placeholder="e.g. Executive JD Writer"
+                  />
+                </label>
+                {user?.role === "admin" && (
+                  <label className="marketplace-editor-field">
+                    <span>Visibility</span>
+                    <select
+                      value={draftVisibility}
+                      onChange={(e) => setDraftVisibility(e.target.value as "private" | "shared")}
+                    >
+                      <option value="private">Private</option>
+                      <option value="shared">Shared</option>
+                    </select>
+                  </label>
+                )}
+                <div className="marketplace-editor-actions">
+                  {editingSkillId && (
+                    <button
+                      type="button"
+                      className="marketplace-secondary-btn"
+                      onClick={() => {
+                        setEditingSkillId(null);
+                        setDraftName("");
+                        setDraftVisibility("private");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="marketplace-create-btn"
+                    onClick={handleCreateOrUpdate}
+                    disabled={!draftName.trim()}
+                  >
+                    {editingSkillId ? "Save Skill" : "Create Skill"}
+                  </button>
+                </div>
+              </div>
               <div className="marketplace-grid">
                 {skills.map((skill) => (
                   <div
@@ -190,6 +299,10 @@ export default function SkillsMarketplace({
                         {skill.category}
                       </span>
                     )}
+                    <div className="marketplace-card-tags">
+                      <span className="marketplace-card-tag">{skill.source}</span>
+                      <span className="marketplace-card-tag">{skill.visibility}</span>
+                    </div>
                     <button
                       type="button"
                       className={`marketplace-card-btn ${skill.installed ? "marketplace-card-btn--remove" : "marketplace-card-btn--install"}`}
@@ -202,6 +315,12 @@ export default function SkillsMarketplace({
                           ? "Uninstall"
                           : "Install"}
                     </button>
+                    {skill.source === "user" && (skill.owner_user_id === user?.id || user?.role === "admin") && (
+                      <div className="marketplace-card-actions">
+                        <button type="button" onClick={() => handleEdit(skill)}>Edit</button>
+                        <button type="button" onClick={() => handleDelete(skill)}>Delete</button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
