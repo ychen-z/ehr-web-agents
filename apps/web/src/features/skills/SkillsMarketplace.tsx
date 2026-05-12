@@ -11,6 +11,13 @@ import {
 import { useAuth } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api";
 
+const TOOL_OPTIONS = [
+  { value: "generate_jd", label: "JD Generation" },
+  { value: "screen_resume", label: "Resume Screening" },
+  { value: "generate_interview_questions", label: "Interview Questions" },
+  { value: "summarize_interview_feedback", label: "Feedback Summary" },
+] as const;
+
 interface SkillsMarketplaceProps {
   open: boolean;
   onClose: () => void;
@@ -29,6 +36,7 @@ export default function SkillsMarketplace({
   const [toggling, setToggling] = useState<Set<string>>(new Set());
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
+  const [draftToolName, setDraftToolName] = useState("generate_jd");
   const [draftVisibility, setDraftVisibility] = useState<"private" | "shared">("private");
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
 
@@ -102,6 +110,7 @@ export default function SkillsMarketplace({
       if (editingSkillId) {
         await updateSkill(editingSkillId, {
           name,
+          mock_tool_name: draftToolName,
           visibility: user?.role === "admin" ? draftVisibility : "private",
         });
       } else {
@@ -110,11 +119,12 @@ export default function SkillsMarketplace({
           name,
           description: "Custom recruitment skill",
           category: "recruitment",
-          mock_tool_name: "generate_jd",
+          mock_tool_name: draftToolName,
           visibility: user?.role === "admin" ? draftVisibility : "private",
         });
       }
       setDraftName("");
+      setDraftToolName("generate_jd");
       setDraftVisibility("private");
       setEditingSkillId(null);
       await load();
@@ -122,11 +132,12 @@ export default function SkillsMarketplace({
     } catch (err) {
       setToggleError(err instanceof ApiError ? err.message : "Failed to save skill.");
     }
-  }, [draftName, draftVisibility, editingSkillId, load, onSkillChange, user?.role]);
+  }, [draftName, draftToolName, draftVisibility, editingSkillId, load, onSkillChange, user?.role]);
 
   const handleEdit = useCallback((skill: SkillResponse) => {
     setEditingSkillId(skill.skill_id);
     setDraftName(skill.name);
+    setDraftToolName(skill.mock_tool_name ?? "generate_jd");
     setDraftVisibility(skill.visibility);
   }, []);
 
@@ -223,6 +234,19 @@ export default function SkillsMarketplace({
                     placeholder="e.g. Executive JD Writer"
                   />
                 </label>
+                <label className="marketplace-editor-field">
+                  <span>Tool binding</span>
+                  <select
+                    value={draftToolName}
+                    onChange={(e) => setDraftToolName(e.target.value)}
+                  >
+                    {TOOL_OPTIONS.map((tool) => (
+                      <option key={tool.value} value={tool.value}>
+                        {tool.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 {user?.role === "admin" && (
                   <label className="marketplace-editor-field">
                     <span>Visibility</span>
@@ -243,6 +267,7 @@ export default function SkillsMarketplace({
                       onClick={() => {
                         setEditingSkillId(null);
                         setDraftName("");
+                        setDraftToolName("generate_jd");
                         setDraftVisibility("private");
                       }}
                     >
@@ -299,6 +324,9 @@ export default function SkillsMarketplace({
                         {skill.category}
                       </span>
                     )}
+                    <span className="marketplace-card-tool">
+                      Tool: {TOOL_OPTIONS.find((tool) => tool.value === skill.mock_tool_name)?.label ?? skill.mock_tool_name ?? "Not bound"}
+                    </span>
                     <div className="marketplace-card-tags">
                       <span className="marketplace-card-tag">{skill.source}</span>
                       <span className="marketplace-card-tag">{skill.visibility}</span>

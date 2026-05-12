@@ -134,6 +134,7 @@ export default function AgentWorkspace() {
   );
 
   const selectedSkillName = activeSkill?.name ?? null;
+  const selectedToolName = activeSkill?.mock_tool_name ?? null;
 
   const runStatus = activeRun?.status ?? "idle";
 
@@ -594,6 +595,7 @@ export default function AgentWorkspace() {
             messages={chatMessages}
             activeRun={activeRun}
             selectedSkillName={selectedSkillName}
+            selectedToolName={selectedToolName}
             modelNotConfigured={modelNotConfigured}
             onSend={handleSend}
             onStop={handleStop}
