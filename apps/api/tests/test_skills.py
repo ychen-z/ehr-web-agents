@@ -175,6 +175,7 @@ def test_hrbp_created_skill_is_private_to_creator(client, db_session):
     created = create_resp.json()
     assert created["visibility"] == "private"
     assert created["source"] == "user"
+    assert created["mock_tool_name"] == "generate_jd"
 
     hrbp_list = client.get("/api/skills", headers=hrbp_headers).json()
     assert "my_private_jd" in {s["skill_id"] for s in hrbp_list}
@@ -245,10 +246,11 @@ def test_user_can_update_and_delete_own_private_skill(client, db_session):
     update_resp = client.patch(
         "/api/skills/editable_private",
         headers=headers,
-        json={"name": "Edited Private Skill"},
+        json={"name": "Edited Private Skill", "mock_tool_name": "screen_resume"},
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["name"] == "Edited Private Skill"
+    assert update_resp.json()["mock_tool_name"] == "screen_resume"
 
     delete_resp = client.delete("/api/skills/editable_private", headers=headers)
     assert delete_resp.status_code == 204

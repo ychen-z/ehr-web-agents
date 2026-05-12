@@ -5,6 +5,7 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   activeRun: ActiveRun | null;
   selectedSkillName: string | null;
+  selectedToolName: string | null;
   modelNotConfigured: boolean;
   onSend: (content: string) => void;
   onStop: () => void;
@@ -25,6 +26,7 @@ export default function ChatPanel({
   messages,
   activeRun,
   selectedSkillName,
+  selectedToolName,
   modelNotConfigured,
   onSend,
   onStop,
@@ -134,6 +136,10 @@ export default function ChatPanel({
             keys before submitting.
           </div>
         )}
+        <div className="chat-skill-context" aria-live="polite">
+          <span>Active skill: {selectedSkillName ?? "None"}</span>
+          <span>Tool: {selectedToolName ?? "Not bound"}</span>
+        </div>
         <form className="chat-form" onSubmit={handleSubmit}>
           <textarea
             ref={textareaRef}

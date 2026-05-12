@@ -969,6 +969,22 @@ body {
   line-height: 1.4;
 }
 
+.chat-skill-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+}
+
+.chat-skill-context span {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+}
+
 .chat-form {
   display: flex;
   gap: 8px;
@@ -1592,7 +1608,7 @@ body {
 
 .marketplace-editor {
   display: grid;
-  grid-template-columns: minmax(180px, 1.3fr) minmax(160px, 1fr) minmax(120px, 0.7fr) auto;
+  grid-template-columns: minmax(180px, 1.3fr) minmax(150px, 0.9fr) minmax(120px, 0.7fr) auto;
   gap: 12px;
   align-items: end;
   margin-bottom: 16px;
@@ -1725,6 +1741,17 @@ body {
   border-radius: 10px;
   background: var(--color-bg);
   color: var(--color-text-muted);
+  align-self: flex-start;
+}
+
+.marketplace-card-tool {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   align-self: flex-start;
 }
 

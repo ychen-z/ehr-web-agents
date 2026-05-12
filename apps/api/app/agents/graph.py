@@ -70,8 +70,23 @@ def invoke_mock_mcp_tool(ctx: AgentContext, db: Session) -> AgentContext:
 
 
 def call_model(ctx: AgentContext, db: Session) -> AgentContext:
+    import json as _json
+
+    skill_name = ctx.skill.name if ctx.skill else ctx.skill_id
+    tool_name = (ctx.skill.mock_tool_name or ctx.skill_id) if ctx.skill else ctx.skill_id
+
+    system_prompt = (
+        f"You are an HR recruitment assistant. "
+        f"The user activated the \"{skill_name}\" skill which invoked the \"{tool_name}\" tool.\n\n"
+        f"The tool has already produced structured output (shown below). "
+        f"Use the tool output as your primary source of truth. "
+        f"Summarize, explain, or expand on the tool results in a helpful way for the HRBP user. "
+        f"Do NOT ignore the tool output or generate unrelated content.\n\n"
+        f"--- TOOL OUTPUT ---\n{_json.dumps(ctx.structured_output, ensure_ascii=False, indent=2)}\n--- END TOOL OUTPUT ---"
+    )
+
     messages = [
-        {"role": "system", "content": "You are an HR recruitment assistant."},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": ctx.user_message},
     ]
     response = ctx.model_adapter.invoke(messages)
