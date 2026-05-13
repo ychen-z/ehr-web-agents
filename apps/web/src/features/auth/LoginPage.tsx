@@ -23,12 +23,12 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1 className="login-title">HR Agent</h1>
-        <p className="login-subtitle">Recruitment Workspace</p>
+        <h1 className="login-title">HR 智能助手</h1>
+        <p className="login-subtitle">招聘工作台</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
-            <label htmlFor="login-email">Email</label>
+            <label htmlFor="login-email">邮箱</label>
             <input
               id="login-email"
               type="email"
@@ -40,13 +40,13 @@ export default function LoginPage() {
             />
           </div>
           <div className="login-field">
-            <label htmlFor="login-password">Password</label>
+            <label htmlFor="login-password">密码</label>
             <input
               id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder="请输入密码"
               required
               autoComplete="current-password"
             />
@@ -57,7 +57,7 @@ export default function LoginPage() {
             disabled={isLoading}
             aria-busy={isLoading}
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "登录中..." : "登录"}
           </button>
         </form>
 
@@ -66,7 +66,7 @@ export default function LoginPage() {
           role="status"
           aria-live="polite"
         >
-          {isLoading && !error && "Signing in..."}
+          {isLoading && !error && "登录中..."}
           {error && (
             <span className="login-error" role="alert">
               {error}
@@ -75,7 +75,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-quick">
-          <p className="login-quick-title">Quick Sign In</p>
+          <p className="login-quick-title">快速登录</p>
           <div className="login-quick-buttons">
             {QUICK_LOGINS.map((ql) => (
               <button

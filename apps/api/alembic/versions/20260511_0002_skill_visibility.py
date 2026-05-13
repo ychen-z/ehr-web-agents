@@ -1,4 +1,4 @@
-"""add skill ownership and visibility
+"""添加技能所有权和可见性字段
 
 Revision ID: 0002
 Revises: 0001

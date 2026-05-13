@@ -12,10 +12,10 @@ import { useAuth } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api";
 
 const TOOL_OPTIONS = [
-  { value: "generate_jd", label: "JD Generation" },
-  { value: "screen_resume", label: "Resume Screening" },
-  { value: "generate_interview_questions", label: "Interview Questions" },
-  { value: "summarize_interview_feedback", label: "Feedback Summary" },
+  { value: "generate_jd", label: "JD 生成" },
+  { value: "screen_resume", label: "简历筛选" },
+  { value: "generate_interview_questions", label: "面试问题" },
+  { value: "summarize_interview_feedback", label: "面试反馈总结" },
 ] as const;
 
 interface SkillsMarketplaceProps {
@@ -48,7 +48,7 @@ export default function SkillsMarketplace({
       setSkills(data);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to load skills.",
+        err instanceof ApiError ? err.message : "加载技能失败。",
       );
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export default function SkillsMarketplace({
         onSkillChange();
       } catch (err) {
         setToggleError(
-          err instanceof ApiError ? err.message : "Failed to update skill.",
+          err instanceof ApiError ? err.message : "更新技能失败。",
         );
       } finally {
         setToggling((prev) => {
@@ -130,7 +130,7 @@ export default function SkillsMarketplace({
       await load();
       onSkillChange();
     } catch (err) {
-      setToggleError(err instanceof ApiError ? err.message : "Failed to save skill.");
+      setToggleError(err instanceof ApiError ? err.message : "保存技能失败。");
     }
   }, [draftName, draftToolName, draftVisibility, editingSkillId, load, onSkillChange, user?.role]);
 
@@ -148,7 +148,7 @@ export default function SkillsMarketplace({
       await load();
       onSkillChange();
     } catch (err) {
-      setToggleError(err instanceof ApiError ? err.message : "Failed to delete skill.");
+      setToggleError(err instanceof ApiError ? err.message : "删除技能失败。");
     }
   }, [load, onSkillChange]);
 
@@ -160,7 +160,7 @@ export default function SkillsMarketplace({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Skills Marketplace"
+      aria-label="技能市场"
     >
       <div
         className="marketplace-modal"
@@ -169,12 +169,12 @@ export default function SkillsMarketplace({
         tabIndex={-1}
       >
         <div className="marketplace-header">
-          <h2 className="marketplace-title">Skills Marketplace</h2>
+          <h2 className="marketplace-title">技能市场</h2>
           <button
             type="button"
             className="marketplace-close-btn"
             onClick={onClose}
-            aria-label="Close marketplace"
+            aria-label="关闭技能市场"
           >
             <svg
               width="16"
@@ -197,7 +197,7 @@ export default function SkillsMarketplace({
           {loading ? (
             <div className="marketplace-loading" role="status">
               <span className="marketplace-spinner" />
-              Loading skills...
+              正在加载技能...
             </div>
           ) : error ? (
             <div className="marketplace-error" role="alert">
@@ -207,7 +207,7 @@ export default function SkillsMarketplace({
                 className="marketplace-retry-btn"
                 onClick={load}
               >
-                Retry
+                重试
               </button>
             </div>
           ) : (
@@ -220,22 +220,22 @@ export default function SkillsMarketplace({
               <div className="marketplace-editor">
                 <div>
                   <h3 className="marketplace-editor-title">
-                    {editingSkillId ? "Edit Skill" : "Create Skill"}
+                    {editingSkillId ? "编辑技能" : "创建技能"}
                   </h3>
                   <p className="marketplace-editor-help">
-                    Personal skills stay private. Admin shared skills are visible to everyone.
+                    个人技能保持私有。管理员共享技能对所有人可见。
                   </p>
                 </div>
                 <label className="marketplace-editor-field">
-                  <span>Skill name</span>
+                  <span>技能名称</span>
                   <input
                     value={draftName}
                     onChange={(e) => setDraftName(e.target.value)}
-                    placeholder="e.g. Executive JD Writer"
+                    placeholder="例如：高管 JD 撰写"
                   />
                 </label>
                 <label className="marketplace-editor-field">
-                  <span>Tool binding</span>
+                  <span>工具绑定</span>
                   <select
                     value={draftToolName}
                     onChange={(e) => setDraftToolName(e.target.value)}
@@ -249,13 +249,13 @@ export default function SkillsMarketplace({
                 </label>
                 {user?.role === "admin" && (
                   <label className="marketplace-editor-field">
-                    <span>Visibility</span>
+                    <span>可见性</span>
                     <select
                       value={draftVisibility}
                       onChange={(e) => setDraftVisibility(e.target.value as "private" | "shared")}
                     >
-                      <option value="private">Private</option>
-                      <option value="shared">Shared</option>
+                      <option value="private">私有</option>
+                      <option value="shared">共享</option>
                     </select>
                   </label>
                 )}
@@ -271,7 +271,7 @@ export default function SkillsMarketplace({
                         setDraftVisibility("private");
                       }}
                     >
-                      Cancel
+                      取消
                     </button>
                   )}
                   <button
@@ -280,7 +280,7 @@ export default function SkillsMarketplace({
                     onClick={handleCreateOrUpdate}
                     disabled={!draftName.trim()}
                   >
-                    {editingSkillId ? "Save Skill" : "Create Skill"}
+                    {editingSkillId ? "保存技能" : "创建技能"}
                   </button>
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function SkillsMarketplace({
                     </div>
                     <h3 className="marketplace-card-name">{skill.name}</h3>
                     <p className="marketplace-card-desc">
-                      {skill.description ?? "No description available."}
+                      {skill.description ?? "暂无描述。"}
                     </p>
                     {skill.category && (
                       <span className="marketplace-card-category">
@@ -325,7 +325,7 @@ export default function SkillsMarketplace({
                       </span>
                     )}
                     <span className="marketplace-card-tool">
-                      Tool: {TOOL_OPTIONS.find((tool) => tool.value === skill.mock_tool_name)?.label ?? skill.mock_tool_name ?? "Not bound"}
+                      工具：{TOOL_OPTIONS.find((tool) => tool.value === skill.mock_tool_name)?.label ?? skill.mock_tool_name ?? "未绑定"}
                     </span>
                     <div className="marketplace-card-tags">
                       <span className="marketplace-card-tag">{skill.source}</span>
@@ -338,15 +338,15 @@ export default function SkillsMarketplace({
                       disabled={toggling.has(skill.skill_id)}
                     >
                       {toggling.has(skill.skill_id)
-                        ? "Updating..."
+                        ? "更新中..."
                         : skill.installed
-                          ? "Uninstall"
-                          : "Install"}
+                          ? "卸载"
+                          : "安装"}
                     </button>
                     {skill.source === "user" && (skill.owner_user_id === user?.id || user?.role === "admin") && (
                       <div className="marketplace-card-actions">
-                        <button type="button" onClick={() => handleEdit(skill)}>Edit</button>
-                        <button type="button" onClick={() => handleDelete(skill)}>Delete</button>
+                        <button type="button" onClick={() => handleEdit(skill)}>编辑</button>
+                        <button type="button" onClick={() => handleDelete(skill)}>删除</button>
                       </div>
                     )}
                   </div>

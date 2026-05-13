@@ -47,9 +47,9 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       className="result-copy-btn"
       onClick={handleCopy}
-      aria-label={copied ? "Copied" : "Copy to clipboard"}
+      aria-label={copied ? "已复制" : "复制到剪贴板"}
     >
-      {copied ? "Copied" : "Copy"}
+      {copied ? "已复制" : "复制"}
     </button>
   );
 }
@@ -77,10 +77,10 @@ function renderField(label: string, value: unknown) {
 
 function getResultTitle(toolName: string, skillId: string): string {
   const titles: Record<string, string> = {
-    generate_jd: "Job Description",
-    screen_resume: "Resume Screening",
-    generate_interview_questions: "Interview Questions",
-    summarize_interview_feedback: "Feedback Summary",
+    generate_jd: "职位描述",
+    screen_resume: "简历筛选",
+    generate_interview_questions: "面试问题",
+    summarize_interview_feedback: "面试反馈总结",
   };
   return titles[toolName] ?? titles[skillId] ?? skillId;
 }
@@ -128,9 +128,9 @@ export default function ResultPanel({
   evidence,
 }: ResultPanelProps) {
   return (
-    <div className="result-panel" role="complementary" aria-label="Structured results">
+    <div className="result-panel" role="complementary" aria-label="结构化结果">
       <div className="result-panel-header">
-        <h2 className="result-panel-title">Results</h2>
+        <h2 className="result-panel-title">结果</h2>
       </div>
       <div className="result-panel-body">
         <AgentTimeline
@@ -144,7 +144,7 @@ export default function ResultPanel({
           <div className="result-empty">
             <div className="result-empty-icon" aria-hidden="true" />
             <p className="result-empty-text">
-              Structured output from agent runs will appear here.
+              智能体运行的结构化输出将在此显示。
             </p>
           </div>
         ) : (

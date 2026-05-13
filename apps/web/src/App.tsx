@@ -11,7 +11,7 @@ function AppShell() {
       <div className="app-shell">
         <div className="app-loading" role="status" aria-label="Loading">
           <span className="app-loading-spinner" />
-          Restoring session...
+          正在恢复会话...
         </div>
       </div>
     );
@@ -24,8 +24,8 @@ function AppShell() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1 className="app-title">HR Agent</h1>
-        <span className="app-subtitle">Recruitment Workspace</span>
+        <h1 className="app-title">HR 智能助手</h1>
+        <span className="app-subtitle">招聘工作台</span>
         <div className="app-header-right">
           <span className="app-user-label">
             {user.email}
@@ -36,7 +36,7 @@ function AppShell() {
             className="app-logout-btn"
             onClick={logout}
           >
-            Sign Out
+            退出登录
           </button>
         </div>
       </header>

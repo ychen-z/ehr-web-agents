@@ -122,7 +122,7 @@ def auth_headers(hrbp_token):
 def fake_chat_adapter():
     import json as _json
 
-    # Tool call returns structured JSON; summary call returns text
+    # 工具调用返回结构化 JSON；总结调用返回文本
     _TOOL_OUTPUTS = {
         "generate_jd": {
             "job_title": "Senior Developer",
@@ -157,14 +157,14 @@ def fake_chat_adapter():
     class FakeChatAdapter:
         def invoke(self, messages, **kwargs):
             full_text = " ".join(m.get("content", "") for m in messages)
-            # If system prompt asks for structured JSON output, return tool JSON
+            # 如果系统提示要求结构化 JSON 输出，返回工具 JSON
             if "Output ONLY valid JSON" in full_text or "structured data generator" in full_text:
-                # Match tool name precisely: check for the tool description marker
+                # 精确匹配工具名称：检查工具描述标记
                 for tool_name in ("screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_jd"):
-                    # _build_tool_prompt puts "Your task: <description>" where description comes from TOOL_SCHEMAS
+                    # _build_tool_prompt 会放入 "Your task: <description>"，其中 description 来自 TOOL_SCHEMAS
                     if f'"{tool_name}"' in full_text or f"Screen and evaluate" in full_text and tool_name == "screen_resume":
                         return _json.dumps(_TOOL_OUTPUTS[tool_name])
-                    # Also check via output field names unique to each tool
+                    # 也通过每个工具独有的输出字段名来检查
                     if tool_name == "screen_resume" and "screening_dimensions" in full_text:
                         return _json.dumps(_TOOL_OUTPUTS["screen_resume"])
                     if tool_name == "generate_interview_questions" and "question_groups" in full_text:

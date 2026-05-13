@@ -65,10 +65,9 @@ export default function ChatPanel({
         {messages.length === 0 && !isRunning && (
           <div className="chat-empty">
             <div className="chat-empty-icon" aria-hidden="true" />
-            <h2 className="chat-empty-title">Recruitment Agent Workspace</h2>
+            <h2 className="chat-empty-title">招聘智能体工作台</h2>
             <p className="chat-empty-text">
-              Install skills from the marketplace, select a model, create a
-              conversation, and describe your recruiting task.
+              从技能市场安装技能，选择模型，创建对话，然后描述你的招聘任务。
             </p>
           </div>
         )}
@@ -83,7 +82,7 @@ export default function ChatPanel({
             </div>
             <div className="chat-message-body">
               <div className="chat-message-role">
-                {msg.role === "user" ? "You" : "Agent"}
+                {msg.role === "user" ? "你" : "智能体"}
               </div>
               <div className="chat-message-content">
                 {renderContent(msg.content)}
@@ -104,7 +103,7 @@ export default function ChatPanel({
                 <span className="chat-typing-dot" />
                 <span className="chat-typing-dot" />
                 <span className="chat-typing-dot" />
-                <span className="chat-typing-label">Thinking...</span>
+                <span className="chat-typing-label">思考中...</span>
               </div>
             </div>
           </div>
@@ -118,7 +117,7 @@ export default function ChatPanel({
           <div className="chat-status-bar" role="status">
             <span className="chat-status-spinner" />
             <span className="chat-status-text">
-              Agent is processing
+              智能体处理中
               {selectedSkillName ? ` (${selectedSkillName})` : ""}...
             </span>
             <button
@@ -126,19 +125,18 @@ export default function ChatPanel({
               className="chat-stop-btn"
               onClick={onStop}
             >
-              Stop
+              停止
             </button>
           </div>
         )}
         {modelNotConfigured && !isRunning && (
           <div className="chat-warning" role="alert">
-            The selected model provider is not configured. Set required API
-            keys before submitting.
+            所选模型服务商未配置，请先设置 API 密钥。
           </div>
         )}
         <div className="chat-skill-context" aria-live="polite">
-          <span>Active skill: {selectedSkillName ?? "None"}</span>
-          <span>Tool: {selectedToolName ?? "Not bound"}</span>
+          <span>当前技能：{selectedSkillName ?? "无"}</span>
+          <span>工具：{selectedToolName ?? "未绑定"}</span>
         </div>
         <form className="chat-form" onSubmit={handleSubmit}>
           <textarea
@@ -147,7 +145,7 @@ export default function ChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Describe your recruiting task... (Shift+Enter for new line)"
+            placeholder="描述你的招聘任务...（Shift+Enter 换行）"
             rows={1}
             disabled={disabled || isRunning}
             aria-label="Message input"

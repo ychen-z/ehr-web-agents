@@ -1,7 +1,8 @@
-"""LLM-based tool execution: replace mock tools with real LLM structured output."""
+"""基于 LLM 的工具执行：用真实的 LLM 结构化输出替代 mock 工具。"""
 
 import json
 import logging
+import re
 from typing import Any
 
 from app.models.adapters import ChatModelAdapter
@@ -47,7 +48,7 @@ TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
 
 
 class ToolExecutionError(Exception):
-    """Raised when LLM tool execution fails."""
+    """LLM 工具执行失败时抛出。"""
 
     def __init__(self, tool_name: str, message: str):
         super().__init__(message)
@@ -79,7 +80,7 @@ def invoke_llm_tool(
     user_message: str,
     adapter: ChatModelAdapter,
 ) -> dict[str, Any]:
-    """Call LLM to generate structured output for a tool."""
+    """调用 LLM 为工具生成结构化输出。"""
     prompt = _build_tool_prompt(tool_name, user_message)
 
     messages = [
@@ -89,8 +90,17 @@ def invoke_llm_tool(
 
     raw = adapter.invoke(messages)
 
-    # Strip markdown code fences if LLM wraps output
+    # 从 LLM 响应中提取 JSON，支持多种格式：
+    # 1. 纯 JSON
+    # 2. markdown 代码块包裹的 JSON
+    # 3. JSON 前后混有说明文字
+    # 4. 推理模型带 <think>...</think> 标签
     cleaned = raw.strip()
+
+    # 去除推理模型的思考标签（如 MiniMax-M1）
+    cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
+
+    # 去除 markdown 代码块标记
     if cleaned.startswith("```"):
         first_newline = cleaned.index("\n") if "\n" in cleaned else 3
         cleaned = cleaned[first_newline + 1 :]
@@ -98,11 +108,22 @@ def invoke_llm_tool(
         cleaned = cleaned[: -3]
     cleaned = cleaned.strip()
 
+    # 如果清理后仍然不是以 { 开头，尝试从文本中提取 JSON 对象
+    if cleaned and not cleaned.startswith("{"):
+        # 寻找第一个 { 到最后一个 } 之间的内容
+        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if match:
+            cleaned = match.group(0)
+
+    if not cleaned:
+        logger.error("LLM tool %s 返回空内容，原始响应: %s", tool_name, raw[:500])
+        raise ToolExecutionError(tool_name, f"LLM 返回了空内容，无法解析为 JSON")
+
     try:
         result = json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logger.error("LLM tool %s returned invalid JSON: %s", tool_name, cleaned[:200])
-        raise ToolExecutionError(tool_name, f"LLM returned invalid JSON: {e}") from e
+        logger.error("LLM tool %s 返回无效 JSON: %s\n原始响应: %s", tool_name, cleaned[:200], raw[:500])
+        raise ToolExecutionError(tool_name, f"LLM 返回无效 JSON: {e}") from e
 
     if not isinstance(result, dict):
         raise ToolExecutionError(tool_name, "LLM returned non-object JSON")
@@ -116,10 +137,10 @@ def invoke_llm_tool(
 
 
 def get_available_tools() -> list[str]:
-    """Return list of available tool names."""
+    """返回可用工具名称列表。"""
     return list(TOOL_SCHEMAS.keys())
 
 
 def get_tool_schema(tool_name: str) -> dict[str, Any] | None:
-    """Return schema for a specific tool."""
+    """返回指定工具的 schema。"""
     return TOOL_SCHEMAS.get(tool_name)
