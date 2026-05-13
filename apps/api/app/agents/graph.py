@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from app.agents.models import AgentRun, ToolInvocation
 from app.agents.stream import RunEvent, emit
 from app.conversations.models import Conversation, Message
-from app.mock_mcp.tools import run_mock_tool, UnknownSkillError
 from app.models.adapters import ChatModelAdapter
 from app.shared.errors import AppError
 from app.skills.models import Skill
+from app.tools.llm_tools import ToolExecutionError, invoke_llm_tool
 
 
 @dataclass
@@ -41,17 +41,17 @@ def load_context(ctx: AgentContext, db: Session) -> AgentContext:
 def select_skill(ctx: AgentContext, db: Session) -> AgentContext:
     skill = db.query(Skill).filter(Skill.skill_id == ctx.skill_id).first()
     if skill is None:
-        raise UnknownSkillError(ctx.skill_id)
+        raise ToolExecutionError(ctx.skill_id, f"Skill not found: {ctx.skill_id}")
     ctx.skill = skill
     ctx.emit("skill_selected", {"skill_id": skill.skill_id, "name": skill.name})
     return ctx
 
 
-def invoke_mock_mcp_tool(ctx: AgentContext, db: Session) -> AgentContext:
+def invoke_tool(ctx: AgentContext, db: Session) -> AgentContext:
     tool_name = ctx.skill.mock_tool_name or ctx.skill.skill_id
     ctx.emit("tool_started", {"tool_name": tool_name})
 
-    result = run_mock_tool(tool_name, ctx.user_message)
+    result = invoke_llm_tool(tool_name, ctx.user_message, ctx.model_adapter)
 
     ctx.emit("tool_completed", {"tool_name": tool_name, "output": result})
     ctx.emit("structured_result", result)
@@ -121,7 +121,7 @@ def persist_result(ctx: AgentContext, db: Session) -> AgentContext:
 
 
 def execute_graph(ctx: AgentContext, db: Session) -> AgentContext:
-    nodes = [load_context, select_skill, invoke_mock_mcp_tool, call_model, persist_result]
+    nodes = [load_context, select_skill, invoke_tool, call_model, persist_result]
     try:
         for node_fn in nodes:
             ctx = node_fn(ctx, db)
