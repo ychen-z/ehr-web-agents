@@ -7,12 +7,10 @@ This list captures the next work items after the MVP. Work through items from to
 - [x] Add a proper Alembic migration for skill ownership fields instead of relying on manual SQL.
   - Context: `skills` now needs `owner_user_id`, `visibility`, and `source`.
   - Acceptance: existing MySQL databases can run `alembic upgrade head` without manual table edits.
-- [ ] Restart and verify the correct API service is bound to port `8000`.
-  - Context: unrelated local services have occupied `8000` and caused login `404/405`.
-  - Acceptance: `POST /api/auth/login` returns `access_token` and `/api/skills` returns visible skills.
-- [ ] Commit and push the private/shared skill management changes.
-  - Context: latest changes are not yet committed after `4db5fe0`.
-  - Acceptance: clean `git status`, tests pass, remote is updated.
+- [x] Restart and verify the correct API service is bound to port `8010`.
+  - Context: moved to `8010` to avoid conflicts; documented port conflict recovery.
+- [x] Commit and push the private/shared skill management changes.
+  - Committed: `6edf6f3`, `1d7296a`. Remote is updated.
 - [x] Make local dev ports configurable and document conflict recovery.
   - Context: consider moving API to `8010` or documenting how to kill conflicting processes.
   - Acceptance: README includes a reliable startup path and frontend API URL override.
@@ -37,9 +35,8 @@ This list captures the next work items after the MVP. Work through items from to
 - [ ] Finish private/shared skill UX.
   - Context: Marketplace now has a basic create/edit/delete form.
   - Acceptance: user can create private skills, admin can create shared skills, labels and permissions are clear.
-- [ ] Add tool selector and prompt editor to skill creation.
-  - Context: custom skills currently default to `generate_jd`.
-  - Acceptance: creator can choose JD, resume screening, interview questions, feedback summary, or real MCP tools.
+- [x] Add tool selector and prompt editor to skill creation.
+  - Committed: `1d7296a`. Creator can choose tool binding; LLM now uses tool output as context.
 - [ ] Add versioning for user/admin skills.
   - Acceptance: updating a skill creates a new version or records updated metadata without breaking old runs.
 - [ ] Add delete/archive rules.

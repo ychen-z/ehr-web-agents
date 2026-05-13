@@ -120,12 +120,62 @@ def auth_headers(hrbp_token):
 
 @pytest.fixture
 def fake_chat_adapter():
+    import json as _json
+
+    # Tool call returns structured JSON; summary call returns text
+    _TOOL_OUTPUTS = {
+        "generate_jd": {
+            "job_title": "Senior Developer",
+            "responsibilities": ["Design systems", "Code review"],
+            "requirements": ["5+ years experience", "Strong CS fundamentals"],
+            "interview_focus": ["System design", "Problem solving"],
+            "selling_points": ["Remote work", "Competitive salary"],
+        },
+        "screen_resume": {
+            "screening_dimensions": [
+                {"dimension": "Technical Skills", "score": "Strong", "notes": "Good match"},
+                {"dimension": "Experience", "score": "Adequate", "notes": "Sufficient years"},
+            ],
+            "strengths": ["Relevant experience", "Strong portfolio"],
+            "risks": ["Limited leadership experience"],
+            "recommended_next_step": "Proceed to technical interview",
+        },
+        "generate_interview_questions": {
+            "question_groups": [
+                {"competency": "Technical", "questions": ["Describe a complex project", "How do you debug?"]},
+                {"competency": "Behavioral", "questions": ["Tell me about a conflict", "Why this role?"]},
+            ],
+        },
+        "summarize_interview_feedback": {
+            "feedback_summary": "Strong candidate overall",
+            "evidence": ["Good technical answers", "Clear communication"],
+            "concerns": ["Limited management experience"],
+            "decision_recommendation": "Hire - recommend advancing to final round",
+        },
+    }
+
     class FakeChatAdapter:
         def invoke(self, messages, **kwargs):
-            return "This is a fake response from the chat adapter."
+            full_text = " ".join(m.get("content", "") for m in messages)
+            # If system prompt asks for structured JSON output, return tool JSON
+            if "Output ONLY valid JSON" in full_text or "structured data generator" in full_text:
+                # Match tool name precisely: check for the tool description marker
+                for tool_name in ("screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_jd"):
+                    # _build_tool_prompt puts "Your task: <description>" where description comes from TOOL_SCHEMAS
+                    if f'"{tool_name}"' in full_text or f"Screen and evaluate" in full_text and tool_name == "screen_resume":
+                        return _json.dumps(_TOOL_OUTPUTS[tool_name])
+                    # Also check via output field names unique to each tool
+                    if tool_name == "screen_resume" and "screening_dimensions" in full_text:
+                        return _json.dumps(_TOOL_OUTPUTS["screen_resume"])
+                    if tool_name == "generate_interview_questions" and "question_groups" in full_text:
+                        return _json.dumps(_TOOL_OUTPUTS["generate_interview_questions"])
+                    if tool_name == "summarize_interview_feedback" and "feedback_summary" in full_text:
+                        return _json.dumps(_TOOL_OUTPUTS["summarize_interview_feedback"])
+                return _json.dumps(_TOOL_OUTPUTS["generate_jd"])
+            else:
+                return "This is a summary of the tool output for the HRBP user."
 
     return FakeChatAdapter()
-
 
 @pytest.fixture(autouse=True)
 def _inject_fake_chat_adapter(monkeypatch, fake_chat_adapter):
