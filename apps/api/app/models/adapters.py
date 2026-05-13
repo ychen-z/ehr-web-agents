@@ -44,9 +44,11 @@ class MinimaxChatAdapter:
             model=self._model,
             messages=messages,
         )
-        content = completion.choices[0].message.content
+        choice = completion.choices[0]
+        content = choice.message.content
         if not content:
-            raise RuntimeError("Minimax returned no content")
+            # MiniMax-M1 推理模型可能将内容放在其他字段
+            raise RuntimeError("Minimax 返回空内容")
         return content
 
 

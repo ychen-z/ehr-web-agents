@@ -16,10 +16,10 @@ function formatTime(timestamp: number): string {
 }
 
 function skillStatusLabel(status: AgentStatus): string {
-  if (status === "running") return "Running";
-  if (status === "completed") return "Completed";
-  if (status === "failed") return "Failed";
-  return "Ready";
+  if (status === "running") return "运行中";
+  if (status === "completed") return "已完成";
+  if (status === "failed") return "失败";
+  return "就绪";
 }
 
 export default function AgentTimeline({
@@ -31,28 +31,27 @@ export default function AgentTimeline({
   const hasSkill = Boolean(activeSkillName || activeSkillId);
 
   return (
-    <section className="agent-timeline" aria-label="Agent runtime timeline">
+    <section className="agent-timeline" aria-label="智能体运行时间线">
       <div className="agent-timeline-active">
         <div>
-          <div className="agent-timeline-kicker">Active Skill</div>
+          <div className="agent-timeline-kicker">当前技能</div>
           <h3 className="agent-timeline-skill">
-            {activeSkillName ?? activeSkillId ?? "No skill selected"}
+            {activeSkillName ?? activeSkillId ?? "未选择技能"}
           </h3>
         </div>
         <span className={`agent-timeline-status agent-timeline-status--${runStatus}`}>
-          {hasSkill ? skillStatusLabel(runStatus) : "Not selected"}
+          {hasSkill ? skillStatusLabel(runStatus) : "未选择"}
         </span>
       </div>
 
       <div className="agent-timeline-header">
-        <h3 className="agent-timeline-title">Agent Timeline</h3>
-        <span className="agent-timeline-count">{items.length} events</span>
+        <h3 className="agent-timeline-title">智能体时间线</h3>
+        <span className="agent-timeline-count">{items.length} 个事件</span>
       </div>
 
       {items.length === 0 ? (
         <p className="agent-timeline-empty">
-          Run events will appear here as the agent selects skills, invokes tools,
-          and streams model output.
+          智能体选择技能、调用工具和流式输出模型响应时，运行事件将在此显示。
         </p>
       ) : (
         <ol className="agent-timeline-list">

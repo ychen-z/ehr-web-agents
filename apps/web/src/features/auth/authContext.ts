@@ -47,7 +47,7 @@ export function storeToken(token: string): void {
   try {
     s.setItem(STORAGE_KEY, token);
   } catch {
-    // storage blocked or quota exceeded
+    // 存储被阻止或配额已满
   }
 }
 
@@ -57,6 +57,6 @@ export function clearStoredToken(): void {
   try {
     s.removeItem(STORAGE_KEY);
   } catch {
-    // storage blocked
+    // 存储被阻止
   }
 }

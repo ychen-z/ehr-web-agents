@@ -41,33 +41,33 @@ import type {
 } from "./types";
 
 const TIMELINE_LABELS: Record<SSEEventType, string> = {
-  run_started: "Run started",
-  skill_selected: "Skill selected",
-  tool_started: "Tool started",
-  tool_completed: "Tool completed",
-  model_delta: "Model response",
-  structured_result: "Structured result",
-  run_completed: "Run completed",
-  run_failed: "Run failed",
-  stream_closed: "Stream closed",
+  run_started: "运行已启动",
+  skill_selected: "技能已选择",
+  tool_started: "工具调用开始",
+  tool_completed: "工具调用完成",
+  model_delta: "模型响应",
+  structured_result: "结构化结果",
+  run_completed: "运行已完成",
+  run_failed: "运行失败",
+  stream_closed: "流已关闭",
 };
 
 function timelineDescription(eventType: SSEEventType, data: Record<string, unknown>): string {
   if (eventType === "skill_selected") {
-    return `Activated ${(data.name as string) || (data.skill_id as string) || "selected skill"}.`;
+    return `已激活 ${(data.name as string) || (data.skill_id as string) || "所选技能"}。`;
   }
   if (eventType === "tool_started") {
-    return `Invoking ${(data.tool_name as string) || "tool"}.`;
+    return `正在调用 ${(data.tool_name as string) || "工具"}。`;
   }
   if (eventType === "tool_completed") {
-    return `${(data.tool_name as string) || "Tool"} completed.`;
+    return `${(data.tool_name as string) || "工具"} 调用完成。`;
   }
-  if (eventType === "model_delta") return "Model returned response content.";
-  if (eventType === "structured_result") return "Structured output is ready.";
-  if (eventType === "run_failed") return (data.error as string) || "Run failed.";
-  if (eventType === "run_completed") return "Agent run completed successfully.";
-  if (eventType === "stream_closed") return "Event stream closed.";
-  return "Agent run initialized.";
+  if (eventType === "model_delta") return "模型返回响应内容。";
+  if (eventType === "structured_result") return "结构化输出已就绪。";
+  if (eventType === "run_failed") return (data.error as string) || "运行失败。";
+  if (eventType === "run_completed") return "智能体运行成功完成。";
+  if (eventType === "stream_closed") return "事件流已关闭。";
+  return "智能体运行已初始化。";
 }
 
 function messageResponseToChatAction(
@@ -157,7 +157,7 @@ export default function AgentWorkspace() {
       setConversations(c);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to load workspace data.";
+        err instanceof Error ? err.message : "加载工作区数据失败。";
       setSidebarError(message);
     } finally {
       setSidebarLoading(false);
@@ -425,7 +425,7 @@ export default function AgentWorkspace() {
           },
           onRunFailed: (data) => {
             addTimelineItem("run_failed", data, "failed");
-            const errorText = data.error ?? "Agent run failed.";
+            const errorText = data.error ?? "智能体运行失败。";
             setChatMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMsgId
@@ -461,7 +461,7 @@ export default function AgentWorkspace() {
         sseRef.current = subscribeToRunEvents(runId, token, handlers);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Failed to start agent run.";
+          err instanceof Error ? err.message : "启动智能体运行失败。";
         msgCounterRef.current += 1;
         setChatMessages((prev) => [
           ...prev,
@@ -544,7 +544,7 @@ export default function AgentWorkspace() {
             type="button"
             className="workspace-panel-close"
             onClick={() => setMobilePanel(null)}
-            aria-label="Close sidebar"
+            aria-label="关闭侧边栏"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -561,14 +561,14 @@ export default function AgentWorkspace() {
             onClick={() =>
               setMobilePanel(mobilePanel === "sidebar" ? null : "sidebar")
             }
-            aria-label="Toggle sidebar"
+            aria-label="切换侧边栏"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="1" y="2" width="14" height="1.5" rx="0.75" fill="currentColor" />
               <rect x="1" y="7" width="14" height="1.5" rx="0.75" fill="currentColor" />
               <rect x="1" y="12" width="14" height="1.5" rx="0.75" fill="currentColor" />
             </svg>
-            <span>Menu</span>
+            <span>菜单</span>
           </button>
           <button
             type="button"
@@ -576,19 +576,19 @@ export default function AgentWorkspace() {
             onClick={() =>
               setMobilePanel(mobilePanel === "results" ? null : "results")
             }
-            aria-label="Toggle results"
+            aria-label="切换结果面板"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
               <path d="M6 6L10 10M10 6L6 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span>Results</span>
+            <span>结果</span>
           </button>
         </div>
         {messagesLoading ? (
-          <div className="workspace-loading" role="status" aria-label="Loading messages">
+          <div className="workspace-loading" role="status" aria-label="加载消息中">
             <span className="app-loading-spinner" />
-            Loading messages...
+            正在加载消息...
           </div>
         ) : (
           <ChatPanel
@@ -621,7 +621,7 @@ export default function AgentWorkspace() {
             type="button"
             className="workspace-panel-close"
             onClick={() => setMobilePanel(null)}
-            aria-label="Close results"
+            aria-label="关闭结果面板"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

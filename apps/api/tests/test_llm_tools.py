@@ -77,7 +77,7 @@ def test_invoke_llm_tool_raises_on_invalid_json():
 
     with pytest.raises(ToolExecutionError) as exc_info:
         invoke_llm_tool("generate_jd", "test", FakeAdapter())
-    assert "invalid JSON" in str(exc_info.value)
+    assert "无效 JSON" in str(exc_info.value)
 
 
 def test_invoke_llm_tool_raises_on_non_object():

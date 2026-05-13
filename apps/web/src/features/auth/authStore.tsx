@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ...prev,
             isLoading: false,
             error:
-              "Unable to restore session. Please sign in again if the problem persists.",
+              "无法恢复会话，如问题持续请重新登录。",
           }));
         }
       });
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const message =
         err instanceof ApiError
           ? err.message
-          : "Login failed. Please try again.";
+          : "登录失败，请重试。";
       setState((prev) => ({
         ...prev,
         isLoading: false,

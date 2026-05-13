@@ -61,16 +61,14 @@ function makeHandler(
 }
 
 /*
- * SSE TOKEN-IN-QUERY TRADEOFF:
+ * SSE 查询参数传递 Token 的权衡：
  * ==============================
- * Native EventSource cannot set custom HTTP headers (no Authorization header
- * possible). We pass the auth token as a `token` query parameter, which the
- * backend validates as a JWT. This exposes the token in browser history and
- * server access logs.
+ * 原生 EventSource 无法设置自定义 HTTP 请求头（无法添加 Authorization 头）。
+ * 因此我们将认证 token 作为 `token` 查询参数传递，后端会将其作为 JWT 进行验证。
+ * 这会导致 token 暴露在浏览器历史记录和服务器访问日志中。
  *
- * TODO: Replace with a short-lived, scoped SSE token (e.g. single-run,
- * time-limited) once the backend supports it. This would limit the blast
- * radius if the URL leaks.
+ * TODO: 后端支持后，替换为短期、限定作用域的 SSE token（例如单次运行、
+ * 限时有效），以减少 URL 泄露时的影响范围。
  */
 export function subscribeToRunEvents(
   runId: string,

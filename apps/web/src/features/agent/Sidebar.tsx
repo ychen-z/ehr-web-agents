@@ -60,26 +60,26 @@ export default function Sidebar({
             className="sidebar-error-retry"
             onClick={onRefresh}
           >
-            Retry
+            重试
           </button>
         </div>
       )}
 
       {loading ? (
-        <div className="sidebar-loading" role="status" aria-label="Loading sidebar data">
+        <div className="sidebar-loading" role="status" aria-label="正在加载侧边栏数据">
           <span className="sidebar-spinner" />
-          Loading...
+          加载中...
         </div>
       ) : (
         <>
           <div className="sidebar-section">
-            <h3 className="sidebar-heading">Installed Skills</h3>
+            <h3 className="sidebar-heading">已安装技能</h3>
             <div className="sidebar-subtitle">
-              Installed skills are available for agent runs.
+              已安装的技能可用于智能体运行。
             </div>
             {installedSkills.length === 0 ? (
               <div className="sidebar-empty">
-                <p>No skills installed.</p>
+                <p>暂无已安装技能。</p>
               </div>
             ) : (
               <ul
@@ -108,7 +108,7 @@ export default function Sidebar({
                       />
                       <span className="sidebar-item-text">{skill.name}</span>
                       {activeSkillId === skill.skill_id && (
-                        <span className="sidebar-item-badge">active</span>
+                        <span className="sidebar-item-badge">使用中</span>
                       )}
                     </button>
                   </li>
@@ -124,15 +124,15 @@ export default function Sidebar({
                 className="sidebar-action-icon marketplace-icon"
                 aria-hidden="true"
               />
-              Browse Skills
+              浏览技能
             </button>
           </div>
 
           <div className="sidebar-section">
-            <h3 className="sidebar-heading">Model Provider</h3>
+            <h3 className="sidebar-heading">模型服务商</h3>
             {models.length === 0 ? (
               <div className="sidebar-empty">
-                <p>No models available.</p>
+                <p>暂无可用模型。</p>
               </div>
             ) : (
               <select
@@ -144,39 +144,39 @@ export default function Sidebar({
                 {models.map((m) => (
                   <option key={m.provider_id} value={m.provider_id}>
                     {m.display_name}
-                    {!m.configured ? " (not configured)" : ""}
+                    {!m.configured ? "（未配置）" : ""}
                   </option>
                 ))}
               </select>
             )}
             {selectedModel && !selectedModel.configured && (
               <div className="sidebar-warning" role="alert">
-                Provider not configured. Set API key to enable.
+                服务商未配置，请设置 API 密钥以启用。
               </div>
             )}
           </div>
 
           <div className="sidebar-section sidebar-section--conversations">
             <div className="sidebar-section-header">
-              <h3 className="sidebar-heading">Conversations</h3>
+              <h3 className="sidebar-heading">对话</h3>
               <button
                 type="button"
                 className="sidebar-new-btn"
                 onClick={handleNewConversation}
-                aria-label="New conversation"
+                aria-label="新建对话"
               >
                 <span
                   className="sidebar-action-icon new-icon"
                   aria-hidden="true"
                 />
-                New
+                新建
               </button>
             </div>
             {conversations.length === 0 ? (
               <div className="sidebar-empty">
-                <p>No conversations yet.</p>
+                <p>暂无对话。</p>
                 <p className="sidebar-empty-hint">
-                  Click "New" to start one.
+                  点击"新建"开始一段对话。
                 </p>
               </div>
             ) : (
@@ -199,7 +199,7 @@ export default function Sidebar({
                         aria-hidden="true"
                       />
                       <span className="sidebar-item-text">
-                        {conv.title ?? `Conversation ${conv.id.slice(0, 8)}`}
+                        {conv.title ?? `对话 ${conv.id.slice(0, 8)}`}
                       </span>
                     </button>
                   </li>

@@ -1,4 +1,4 @@
-"""initial
+"""初始数据库迁移
 
 Revision ID: 0001
 Revises:
