@@ -16,6 +16,7 @@ const TOOL_OPTIONS = [
   { value: "screen_resume", label: "简历筛选" },
   { value: "generate_interview_questions", label: "面试问题" },
   { value: "summarize_interview_feedback", label: "面试反馈总结" },
+  { value: "generate_html", label: "HTML 页面生成" },
 ] as const;
 
 interface SkillsMarketplaceProps {

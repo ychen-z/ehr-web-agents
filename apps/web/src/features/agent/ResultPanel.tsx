@@ -81,11 +81,79 @@ function getResultTitle(toolName: string, skillId: string): string {
     screen_resume: "简历筛选",
     generate_interview_questions: "面试问题",
     summarize_interview_feedback: "面试反馈总结",
+    generate_html: "HTML 页面",
   };
   return titles[toolName] ?? titles[skillId] ?? skillId;
 }
 
+
+function HtmlPreviewCard({ result }: { result: StructuredResult }) {
+  const output = result.output ?? {};
+  const html = typeof output.html === "string" ? output.html : "";
+  const title = String(output.title ?? "Generated Page");
+  const description = String(output.description ?? "");
+  const sizeBytes =
+    typeof output.size_bytes === "number"
+      ? output.size_bytes
+      : new Blob([html]).size;
+
+  function handleOpenInNewWindow() {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    if (!win) {
+      console.warn("popup blocked");
+    }
+  }
+
+  return (
+    <div className="result-card">
+      <div className="result-card-header">
+        <h3 className="result-card-title">{title}</h3>
+        <div className="html-preview-actions">
+          <CopyButton text={html} />
+          <button
+            type="button"
+            className="result-copy-btn"
+            onClick={handleOpenInNewWindow}
+          >
+            新窗口打开
+          </button>
+        </div>
+      </div>
+      <div className="result-card-body">
+        {description && <p className="result-field-value">{description}</p>}
+        <iframe
+          title={title}
+          srcDoc={html}
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          className="html-preview-iframe"
+        />
+      </div>
+      <div className="result-card-footer">
+        <span className="result-card-tool">{result.tool_name}</span>
+        <span className="result-card-time">
+          {`${(sizeBytes / 1024).toFixed(1)} KiB · `}
+          {new Date(result.timestamp).toLocaleTimeString()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ResultCard({ result }: { result: StructuredResult }) {
+  const hasHtmlPreview =
+    result.tool_name === "generate_html" &&
+    typeof result.output?.html === "string" &&
+    (result.output.html as string).length > 0;
+
+  if (hasHtmlPreview) {
+    return <HtmlPreviewCard result={result} />;
+  }
+
   const output = result.output ?? {};
   const title = getResultTitle(result.tool_name, result.skill_id);
   const flatText = Object.entries(output)

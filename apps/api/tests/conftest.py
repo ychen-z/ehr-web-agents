@@ -152,6 +152,16 @@ def fake_chat_adapter():
             "concerns": ["Limited management experience"],
             "decision_recommendation": "Hire - recommend advancing to final round",
         },
+        "generate_html": {
+            "title": "Test Landing",
+            "description": "A test landing page",
+            "theme": "light",
+            "primary_color": "#2563eb",
+            "sections": [
+                {"type": "hero", "heading": "Welcome", "body": "Hello world", "items": []},
+                {"type": "features", "heading": "Why us", "body": "Because", "items": ["fast", "safe"]},
+            ],
+        },
     }
 
     class FakeChatAdapter:
@@ -160,7 +170,7 @@ def fake_chat_adapter():
             # 如果系统提示要求结构化 JSON 输出，返回工具 JSON
             if "Output ONLY valid JSON" in full_text or "structured data generator" in full_text:
                 # 精确匹配工具名称：检查工具描述标记
-                for tool_name in ("screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_jd"):
+                for tool_name in ("screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_jd", "generate_html"):
                     # _build_tool_prompt 会放入 "Your task: <description>"，其中 description 来自 TOOL_SCHEMAS
                     if f'"{tool_name}"' in full_text or f"Screen and evaluate" in full_text and tool_name == "screen_resume":
                         return _json.dumps(_TOOL_OUTPUTS[tool_name])
@@ -171,6 +181,8 @@ def fake_chat_adapter():
                         return _json.dumps(_TOOL_OUTPUTS["generate_interview_questions"])
                     if tool_name == "summarize_interview_feedback" and "feedback_summary" in full_text:
                         return _json.dumps(_TOOL_OUTPUTS["summarize_interview_feedback"])
+                    if tool_name == "generate_html" and "page specification" in full_text:
+                        return _json.dumps(_TOOL_OUTPUTS["generate_html"])
                 return _json.dumps(_TOOL_OUTPUTS["generate_jd"])
             else:
                 return "This is a summary of the tool output for the HRBP user."

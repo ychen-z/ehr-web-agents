@@ -483,3 +483,67 @@ def test_invoke_mock_mcp_uses_mock_tool_name_from_skill(client, db_session, hrbp
     )
     assert len(invocations) == 1
     assert invocations[0].tool_name == "generate_jd"
+
+
+def test_generate_html_skill_returns_html_in_structured_output(client, db_session, hrbp_token):
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    seed_model_configs(db_session)
+    _install_skill(db_session, "hrbp@example.com", "generate_html")
+
+    resp = client.post(
+        "/api/agent/runs",
+        json={
+            "skill_id": "generate_html",
+            "user_message": "Build a landing page for a SaaS product",
+            "conversation_id": None,
+            "model_provider_id": "deepseek",
+        },
+        headers={"Authorization": f"Bearer {hrbp_token}"},
+    )
+    assert resp.status_code == 200
+    data = _wait_for_completion(client, resp.json(), hrbp_token)
+    assert data["status"] == "completed"
+
+    output = data["structured_output"]
+    # Python 渲染器产出的 HTML 必须包含 LLM 提取的标题
+    assert "<title>Test Landing</title>" in output["html"]
+    assert output["title"] == "Test Landing"
+    assert output["theme"] == "light"
+    assert output["primary_color"] == "#2563eb"
+    # 旧字段已移除
+    assert "artifact_path" not in output
+    assert "preview_url" not in output
+    # 渲染器把 hero/features section 都画上
+    assert 'class="hero"' in output["html"]
+    assert 'class="features"' in output["html"]
+    # XSS 防御：spec 字段被 HTML 转义
+    assert "<script>" not in output["html"]
+
+
+def test_generate_html_emits_tool_name_in_structured_result_event(client, db_session, hrbp_token):
+    """前端依赖 structured_result 事件的 tool_name 字段路由到 HtmlPreviewCard。"""
+    seed_local_users(db_session)
+    seed_builtin_skills(db_session)
+    seed_model_configs(db_session)
+    _install_skill(db_session, "hrbp@example.com", "generate_html")
+
+    resp = client.post(
+        "/api/agent/runs",
+        json={
+            "skill_id": "generate_html",
+            "user_message": "Landing page",
+            "conversation_id": None,
+            "model_provider_id": "deepseek",
+        },
+        headers={"Authorization": f"Bearer {hrbp_token}"},
+    )
+    run_data = _wait_for_completion(client, resp.json(), hrbp_token)
+
+    events_resp = client.get(
+        f"/api/agent/runs/{run_data['id']}/events?token={hrbp_token}",
+    )
+    assert events_resp.status_code == 200
+    body = events_resp.text
+    assert "structured_result" in body
+    assert '"tool_name": "generate_html"' in body or '"tool_name":"generate_html"' in body

@@ -31,4 +31,12 @@ BUILTIN_SKILLS = [
         "prompt_template": None,
         "mock_tool_name": "summarize_interview_feedback",
     },
+    {
+        "skill_id": "generate_html",
+        "name": "HTML Page Generator",
+        "description": "Generate a complete, self-contained HTML page with inline CSS and JavaScript from natural language requirements.",
+        "category": "development",
+        "prompt_template": None,
+        "mock_tool_name": "generate_html",
+    },
 ]
