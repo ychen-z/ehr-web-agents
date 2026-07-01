@@ -61,7 +61,7 @@ export default function ChatPanel({
 
   return (
     <div className="chat-panel">
-      <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
+      <div className="chat-messages" role="log" aria-label="聊天消息" aria-live="polite">
         {messages.length === 0 && !isRunning && (
           <div className="chat-empty">
             <div className="chat-empty-icon" aria-hidden="true" />
@@ -148,13 +148,13 @@ export default function ChatPanel({
             placeholder="描述你的招聘任务...（Shift+Enter 换行）"
             rows={1}
             disabled={disabled || isRunning}
-            aria-label="Message input"
+            aria-label="消息输入框"
           />
           <button
             type="submit"
             className="chat-send-btn"
             disabled={!canSend}
-            aria-label="Send message"
+            aria-label="发送消息"
           >
             <svg
               width="16"

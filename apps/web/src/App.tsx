@@ -9,7 +9,7 @@ function AppShell() {
   if (isLoading) {
     return (
       <div className="app-shell">
-        <div className="app-loading" role="status" aria-label="Loading">
+        <div className="app-loading" role="status" aria-label="加载中">
           <span className="app-loading-spinner" />
           正在恢复会话...
         </div>

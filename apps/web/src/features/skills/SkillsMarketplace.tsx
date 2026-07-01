@@ -118,7 +118,7 @@ export default function SkillsMarketplace({
         await createSkill({
           skill_id: generatedSkillId || `skill_${Date.now()}`,
           name,
-          description: "Custom recruitment skill",
+          description: "自定义招聘技能",
           category: "recruitment",
           mock_tool_name: draftToolName,
           visibility: user?.role === "admin" ? draftVisibility : "private",

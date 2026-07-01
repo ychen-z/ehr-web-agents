@@ -85,7 +85,7 @@ export default function Sidebar({
               <ul
                 className="sidebar-list"
                 role="listbox"
-                aria-label="Installed skills"
+                aria-label="已安装技能"
               >
                 {installedSkills.map((skill) => (
                   <li key={skill.skill_id}>
@@ -139,7 +139,7 @@ export default function Sidebar({
                 className="sidebar-select"
                 value={activeModelProviderId ?? ""}
                 onChange={(e) => onModelSelect(e.target.value)}
-                aria-label="Select model provider"
+                aria-label="选择模型 provider"
               >
                 {models.map((m) => (
                   <option key={m.provider_id} value={m.provider_id}>
@@ -183,7 +183,7 @@ export default function Sidebar({
               <ul
                 className="sidebar-list"
                 role="listbox"
-                aria-label="Conversations"
+                aria-label="会话列表"
               >
                 {conversations.map((conv) => (
                   <li key={conv.id}>
