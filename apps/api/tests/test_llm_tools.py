@@ -14,7 +14,13 @@ from app.tools.llm_tools import (
 
 def test_get_available_tools_returns_four():
     tools = get_available_tools()
-    assert set(tools) == {"generate_jd", "screen_resume", "generate_interview_questions", "summarize_interview_feedback"}
+    assert set(tools) == {
+        "generate_jd",
+        "screen_resume",
+        "generate_interview_questions",
+        "summarize_interview_feedback",
+        "generate_html",
+    }
 
 
 def test_get_tool_schema_returns_schema():

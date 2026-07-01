@@ -12,10 +12,16 @@ def test_list_skills_returns_four_recruitment_skills(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) == 4
+    assert len(data) == 5
 
     skill_ids = {s["skill_id"] for s in data}
-    assert skill_ids == {"generate_jd", "screen_resume", "generate_interview_questions", "summarize_interview_feedback"}
+    assert skill_ids == {
+        "generate_jd",
+        "screen_resume",
+        "generate_interview_questions",
+        "summarize_interview_feedback",
+        "generate_html",
+    }
 
     for skill in data:
         assert "id" in skill

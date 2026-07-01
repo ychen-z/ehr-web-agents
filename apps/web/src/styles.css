@@ -1482,6 +1482,30 @@ body {
   color: var(--color-text-muted);
 }
 
+/* HTML preview card (generate_html tool) */
+.html-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.html-preview-iframe {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 320px;
+  max-height: 640px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .html-preview-iframe {
+    aspect-ratio: 4 / 5;
+    max-height: none;
+  }
+}
+
 /* ===== Skills Marketplace ===== */
 
 .marketplace-overlay {

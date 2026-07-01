@@ -11,6 +11,7 @@ from app.models.adapters import ChatModelAdapter
 from app.shared.errors import AppError
 from app.skills.models import Skill
 from app.tools.llm_tools import ToolExecutionError, invoke_llm_tool
+from app.tools.script_tools import invoke_script_tool, is_script_tool
 
 
 @dataclass
@@ -51,10 +52,18 @@ def invoke_tool(ctx: AgentContext, db: Session) -> AgentContext:
     tool_name = ctx.skill.mock_tool_name or ctx.skill.skill_id
     ctx.emit("tool_started", {"tool_name": tool_name})
 
-    result = invoke_llm_tool(tool_name, ctx.user_message, ctx.model_adapter)
+    try:
+        if is_script_tool(tool_name):
+            result = invoke_script_tool(tool_name, ctx.user_message, ctx.model_adapter, ctx.run_id)
+        else:
+            result = invoke_llm_tool(tool_name, ctx.user_message, ctx.model_adapter)
+    except ToolExecutionError:
+        raise
+    except Exception as e:
+        raise ToolExecutionError(tool_name, f"Script tool failed: {e}") from e
 
     ctx.emit("tool_completed", {"tool_name": tool_name, "output": result})
-    ctx.emit("structured_result", result)
+    ctx.emit("structured_result", {"tool_name": tool_name, "skill_id": ctx.skill.skill_id, "output": result})
 
     tool_inv = ToolInvocation(
         agent_run_id=ctx.run_id,

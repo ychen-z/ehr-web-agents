@@ -44,6 +44,22 @@ TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
             "decision_recommendation": "string - hire/reject/additional evaluation recommendation",
         },
     },
+    "generate_html": {
+        "description": "Extract a structured page specification from user requirements. A separate Python renderer will turn this spec into HTML — do NOT output HTML yourself",
+        "output_fields": {
+            "title": "string - page title",
+            "description": "string - one-sentence summary of the page purpose",
+            "theme": 'string - either "light" or "dark"',
+            "primary_color": "string - hex color like #2563eb used as accent",
+            "sections": (
+                "list of objects, each with keys: "
+                'type (one of "hero"|"features"|"cta"|"footer"), '
+                "heading (string), "
+                "body (string, supports plain text only), "
+                'items (optional list of strings, only for type="features")'
+            ),
+        },
+    },
 }
 
 
