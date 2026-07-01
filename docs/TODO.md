@@ -20,12 +20,14 @@
 - [ ] 用真实 MCP 客户端集成替换 `mock_mcp`。
   - 背景：时间线事件是真实的，但工具执行目前是本地 mock 逻辑。
   - 验收：技能通过 MCP 客户端调用工具，而非 `app/mock_mcp/tools.py`。
-- [ ] 定义技能 manifest 格式。
+- [x] 定义技能 manifest 格式。
   - 包含：`skill_id`、名称、描述、可见性、版本、prompts、MCP server/tool 绑定、输入 schema。
   - 验收：技能创建时存储 manifest 字段并校验必填工具绑定。
-- [ ] 添加 MCP server 注册 / 配置。
+  - 完成：`ToolSpec` dataclass + `ToolRegistry.validate_skill_binding()` 实现工具绑定校验。
+- [x] 添加 MCP server 注册 / 配置。
   - 背景：内置 MCP 工具应为所有用户预配置；私有 / admin 技能可绑定到允许的工具。
   - 验收：后端能列出可用 MCP 工具，并校验技能所选工具存在。
+  - 完成：`app/gateway/` 全局 `ToolRegistry`，启动时自动注册所有内置工具，`invoke_tool` 前白名单校验。
 - [ ] 持久化工具调用 payload 与输出以备审计。
   - 背景：UI 已展示 Tool Invocation Evidence；后端应提供持久化证据。
   - 验收：run 详情 API 能返回工具名、输入、输出、起止时间、状态。
@@ -56,6 +58,9 @@
 
 ## P2 - 智能体运行时加固
 
+- [x] 实现 Context 服务（会话历史注入 + prompt_template 生效 + Token 预算裁剪）。
+  - 验收：Agent 能感知同一会话历史；prompt_template 占位符生效；超预算消息自动丢弃。
+  - 完成：`app/context/` 模块，`build_context_messages` + `resolve_system_prompt` + `load_conversation_history`。
 - [ ] 将 agent 编排转为显式 LangGraph `StateGraph`。
   - 验收：图节点以图状态转换的形式声明并可测试。
 - [ ] 将 SSE / 事件历史持久化到 MySQL。
