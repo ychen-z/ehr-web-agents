@@ -62,6 +62,58 @@ iframe srcDoc 内嵌渲染 (sandbox="allow-scripts")
 - iframe `sandbox="allow-scripts"` + `referrerPolicy="no-referrer"`
 - 不落盘、不暴露静态服务，避免 IDOR 跨用户访问
 
+## Context 服务
+
+Agent 调用 LLM 时的上下文管理，直接影响回答质量。
+
+### 会话历史注入
+
+Agent run 时自动加载同一会话的历史消息（最多 20 条），按 token 预算从最近开始裁剪后送入 LLM。首次对话无历史 = 零影响。
+
+### prompt_template 生效
+
+Skill 的 `prompt_template` 字段现已接入执行链。支持占位符：
+
+```
+{skill_name} - 技能名称
+{tool_name}  - 工具名称
+{tool_output} - 工具输出 JSON
+```
+
+如果 skill 无 prompt_template 或模板格式错误，自动 fallback 到默认中文提示。
+
+### Token 预算裁剪
+
+单次 context 预算 = `DAILY_TOKEN_LIMIT / 20`（默认 10K token）。超出预算的历史消息从最早开始丢弃。
+
+## MCP 工具网关（轻量版）
+
+集中管理所有可调用工具的注册、校验、白名单。
+
+### 工具注册表
+
+所有工具（LLM 工具 + 脚本工具）在应用启动时自动注册到全局 `ToolRegistry`。每个工具声明：
+
+| 字段 | 说明 |
+|------|------|
+| `name` | 工具唯一标识 |
+| `description` | 工具描述（**必填**，不可为空）|
+| `version` | 版本号（默认 `1.0.0`）|
+| `category` | 分类：`llm` / `script` |
+| `enabled` | 是否启用 |
+
+### 白名单校验
+
+Agent 调用工具前，`invoke_tool` 会检查：
+- 工具名是否在注册表中
+- 工具是否处于启用状态
+
+未注册或已禁用的工具直接拒绝调用，返回错误。
+
+### 技能绑定校验
+
+创建/更新 Skill 时可调用 `registry.validate_skill_binding(tool_name)` 确保绑定的工具合法。
+
 ## Token 用量追踪与日上限
 
 轻量级配额治理，防止误跑烧光 LLM 预算。
