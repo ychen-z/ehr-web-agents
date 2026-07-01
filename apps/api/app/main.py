@@ -16,6 +16,7 @@ from app.shared.database import get_db, get_engine, get_session_factory
 from app.shared.errors import AppError, app_error_handler, http_exception_handler
 from app.shared.logging import setup_logging
 from app.skills.router import router as skills_router
+from app.quota.router import router as quota_router
 
 
 @asynccontextmanager
@@ -70,6 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(models_router)
     app.include_router(conversations_router)
     app.include_router(agents_router)
+    app.include_router(quota_router)
 
     @app.get("/api/me", response_model=UserResponse)
     def get_me(current_user: User = Depends(get_current_user)):

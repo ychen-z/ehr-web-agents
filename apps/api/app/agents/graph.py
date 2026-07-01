@@ -8,6 +8,8 @@ from app.agents.models import AgentRun, ToolInvocation
 from app.agents.stream import RunEvent, emit
 from app.conversations.models import Conversation, Message
 from app.models.adapters import ChatModelAdapter
+from app.quota import check_daily_quota, record_usage
+from app.shared.config import get_settings
 from app.shared.errors import AppError
 from app.skills.models import Skill
 from app.tools.llm_tools import ToolExecutionError, invoke_llm_tool
@@ -36,6 +38,8 @@ class AgentContext:
 
 def load_context(ctx: AgentContext, db: Session) -> AgentContext:
     ctx.emit("run_started", {"run_id": ctx.run_id})
+    settings = get_settings()
+    check_daily_quota(db, ctx.user_id, daily_limit=settings.daily_token_limit)
     return ctx
 
 
@@ -61,6 +65,8 @@ def invoke_tool(ctx: AgentContext, db: Session) -> AgentContext:
         raise
     except Exception as e:
         raise ToolExecutionError(tool_name, f"Script tool failed: {e}") from e
+
+    _record_adapter_usage(ctx, db, step="tool")
 
     ctx.emit("tool_completed", {"tool_name": tool_name, "output": result})
     ctx.emit("structured_result", {"tool_name": tool_name, "skill_id": ctx.skill.skill_id, "output": result})
@@ -100,6 +106,8 @@ def call_model(ctx: AgentContext, db: Session) -> AgentContext:
     ]
     response = ctx.model_adapter.invoke(messages)
 
+    _record_adapter_usage(ctx, db, step="summarize")
+
     ctx.model_response = response
     ctx.emit("model_delta", {"content": response})
     return ctx
@@ -127,6 +135,22 @@ def persist_result(ctx: AgentContext, db: Session) -> AgentContext:
     db.commit()
     ctx.emit("run_completed", {"run_id": ctx.run_id})
     return ctx
+
+
+def _record_adapter_usage(ctx: AgentContext, db: Session, step: str) -> None:
+    """从 adapter.last_usage 记录 token 消耗。"""
+    usage = getattr(ctx.model_adapter, "last_usage", None)
+    if not usage or usage.total_tokens == 0:
+        return
+    record_usage(
+        db,
+        user_id=ctx.user_id,
+        run_id=ctx.run_id,
+        provider_id=ctx.model_provider_id or "unknown",
+        model_name=usage.model_name or "unknown",
+        prompt_tokens=usage.prompt_tokens,
+        completion_tokens=usage.completion_tokens,
+    )
 
 
 def execute_graph(ctx: AgentContext, db: Session) -> AgentContext:

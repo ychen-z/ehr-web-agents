@@ -14,6 +14,7 @@ import app.skills.models as _  # noqa: F401
 import app.conversations.models as _  # noqa: F401
 import app.models.models as _  # noqa: F401
 import app.agents.models as _  # noqa: F401
+import app.quota as _  # noqa: F401
 
 _TEST_DB_PATH = "/tmp/ehr_agents_test.db"
 
@@ -164,7 +165,16 @@ def fake_chat_adapter():
         },
     }
 
+    class FakeTokenUsage:
+        prompt_tokens = 100
+        completion_tokens = 50
+        total_tokens = 150
+        model_name = "fake-model"
+
     class FakeChatAdapter:
+        def __init__(self):
+            self.last_usage = FakeTokenUsage()
+
         def invoke(self, messages, **kwargs):
             full_text = " ".join(m.get("content", "") for m in messages)
             # 如果系统提示要求结构化 JSON 输出，返回工具 JSON

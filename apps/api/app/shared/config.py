@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     minimax_base_url: str = "https://api.minimax.chat/v1"
     minimax_model: str = "MiniMax-M1"
 
+    daily_token_limit: int = 200_000
+
     @property
     def database_url(self) -> str:
         return (

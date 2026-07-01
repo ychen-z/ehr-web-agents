@@ -25,6 +25,14 @@ class FakeAdapter:
     def __init__(self, payload: dict):
         self._payload = payload
 
+        class _Usage:
+            prompt_tokens = 10
+            completion_tokens = 5
+            total_tokens = 15
+            model_name = "fake"
+
+        self.last_usage = _Usage()
+
     def invoke(self, messages, **kwargs):
         return json.dumps(self._payload)
 
