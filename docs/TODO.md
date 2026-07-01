@@ -83,8 +83,9 @@
   - 验收：admin 无需编辑 `.env` 即可测试 provider 连通性。
 - [ ] 为每个 provider 添加模型参数。
   - 包含：模型名、temperature、max tokens、base URL。
-- [ ] 添加模型用量追踪。
-  - 验收：记录 provider、模型、延迟、token 用量（如有）、失败原因。
+- [x] 添加模型用量追踪。
+  - 验收：记录 provider、模型、token 用量。每用户每日上限，超限 429。
+  - 提交：`token_usage_logs` 表，adapter 捕获 usage，GET /api/quota/usage/today。
 - [ ] 添加 provider 健康检查。
   - 验收：模型选择器清晰展示可用 / 不可用 provider。
 

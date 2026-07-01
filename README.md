@@ -62,6 +62,49 @@ iframe srcDoc 内嵌渲染 (sandbox="allow-scripts")
 - iframe `sandbox="allow-scripts"` + `referrerPolicy="no-referrer"`
 - 不落盘、不暴露静态服务，避免 IDOR 跨用户访问
 
+## Token 用量追踪与日上限
+
+轻量级配额治理，防止误跑烧光 LLM 预算。
+
+### 工作原理
+
+1. 每次 LLM 调用后，adapter 自动捕获 `completion.usage`（prompt_tokens / completion_tokens）
+2. 工具调用 + 模型总结两步各记一条 `token_usage_logs`
+3. Agent run 开始前检查当日累计用量，超限直接返回 HTTP 429
+
+### 配置
+
+```bash
+# .env
+DAILY_TOKEN_LIMIT=200000   # 每用户每日上限（默认 20 万 token）
+```
+
+### 查询用量 API
+
+```bash
+GET /api/quota/usage/today
+Authorization: Bearer <token>
+```
+
+响应示例：
+
+```json
+{
+  "user_id": "...",
+  "date": "2026-07-01",
+  "used_tokens": 3200,
+  "daily_limit": 200000,
+  "remaining": 196800,
+  "percentage": 1.6
+}
+```
+
+超限时 Agent run 返回：
+
+```json
+{"code": "QUOTA_EXCEEDED", "message": "今日 Token 额度已用完（已使用 200,150 / 上限 200,000）"}
+```
+
 ## 前置依赖
 
 - Node.js 18+
@@ -94,6 +137,7 @@ cp .env.example .env
 | `MINIMAX_API_KEY` | Minimax API Key | （调用 Minimax 模型时必填）|
 | `MINIMAX_BASE_URL` | Minimax OpenAI 兼容地址 | `https://api.minimax.chat/v1` |
 | `MINIMAX_MODEL` | Minimax 模型名 | `MiniMax-M1` |
+| `DAILY_TOKEN_LIMIT` | 每用户每日 Token 上限 | `200000` |
 
 **重要：** DeepSeek、OpenAI、Minimax 调用真实生产 API。Agent 运行至少需要配置一个 provider 的 API Key，无 mock LLM 回退。
 
