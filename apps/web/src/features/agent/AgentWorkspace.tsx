@@ -28,6 +28,7 @@ import {
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import Sidebar from "./Sidebar";
 import ChatPanel from "./ChatPanel";
+import CheckpointCard from "./CheckpointCard";
 import ResultPanel from "./ResultPanel";
 import SkillsMarketplace from "@/features/skills/SkillsMarketplace";
 import type {
@@ -47,6 +48,7 @@ const TIMELINE_LABELS: Record<SSEEventType, string> = {
   tool_completed: "工具调用完成",
   model_delta: "模型响应",
   structured_result: "结构化结果",
+  checkpoint_reached: "等待确认",
   run_completed: "运行已完成",
   run_failed: "运行失败",
   stream_closed: "流已关闭",
@@ -64,6 +66,7 @@ function timelineDescription(eventType: SSEEventType, data: Record<string, unkno
   }
   if (eventType === "model_delta") return "模型返回响应内容。";
   if (eventType === "structured_result") return "结构化输出已就绪。";
+  if (eventType === "checkpoint_reached") return (data.prompt as string) || "等待用户确认。";
   if (eventType === "run_failed") return (data.error as string) || "运行失败。";
   if (eventType === "run_completed") return "智能体运行成功完成。";
   if (eventType === "stream_closed") return "事件流已关闭。";
@@ -106,6 +109,11 @@ export default function AgentWorkspace() {
   const [timelineItems, setTimelineItems] = useState<AgentTimelineItem[]>([]);
   const [toolEvidence, setToolEvidence] = useState<ToolInvocationEvidence | null>(null);
   const [activeRun, setActiveRun] = useState<ActiveRun | null>(null);
+  const [checkpoint, setCheckpoint] = useState<{
+    runId: string;
+    prompt: string;
+    options: { label: string; value: string; description?: string }[];
+  } | null>(null);
 
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<PanelView>(null);
@@ -407,6 +415,23 @@ export default function AgentWorkspace() {
             };
             setResults((prev) => [...prev, sr]);
           },
+          onCheckpointReached: (data) => {
+            addTimelineItem("checkpoint_reached", data, "running");
+            setCheckpoint({
+              runId: (data.run_id as string) || runId,
+              prompt: (data.prompt as string) || "需要您的确认",
+              options: (data.options as { label: string; value: string; description?: string }[]) || [],
+            });
+            setChatMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, status: "complete" as const }
+                  : m,
+              ),
+            );
+            submittingRef.current = false;
+            setIsSubmitting(false);
+          },
           onRunCompleted: (data) => {
             addTimelineItem("run_completed", data, "completed");
             setActiveRun(null);
@@ -591,6 +616,7 @@ export default function AgentWorkspace() {
             正在加载消息...
           </div>
         ) : (
+          <>
           <ChatPanel
             messages={chatMessages}
             activeRun={activeRun}
@@ -601,6 +627,18 @@ export default function AgentWorkspace() {
             onStop={handleStop}
             disabled={submittingRef.current}
           />
+          {checkpoint && (
+            <CheckpointCard
+              runId={checkpoint.runId}
+              prompt={checkpoint.prompt}
+              options={checkpoint.options}
+              onResumed={() => {
+                setCheckpoint(null);
+                setActiveRun({ runId: checkpoint.runId, status: "running", assistantContent: "" });
+              }}
+            />
+          )}
+          </>
         )}
       </div>
 

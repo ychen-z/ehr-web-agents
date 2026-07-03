@@ -18,6 +18,7 @@ class AgentRun(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending", index=True)
     input_message_id: Mapped[str | None] = mapped_column(String(36))
     structured_output: Mapped[dict | None] = mapped_column(JSON)
+    checkpoint_state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

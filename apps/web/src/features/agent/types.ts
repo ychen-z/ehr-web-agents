@@ -42,6 +42,7 @@ export type SSEEventType =
   | "tool_completed"
   | "model_delta"
   | "structured_result"
+  | "checkpoint_reached"
   | "run_completed"
   | "run_failed"
   | "stream_closed";

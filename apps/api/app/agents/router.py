@@ -6,9 +6,9 @@ from fastapi.responses import StreamingResponse
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.agents.graph import AgentContext, execute_graph
+from app.agents.graph import AgentContext, execute_graph, resume_from_checkpoint
 from app.agents.models import AgentRun
-from app.agents.schemas import RunCreate, RunResponse
+from app.agents.schemas import RunCreate, RunResume, RunResponse, ResumeResponse
 from app.agents.service import create_run, recover_stale_runs, resolve_chat_adapter
 from app.agents.stream import RunEvent, create_queue, get_history, get_queue, cleanup, emit
 from app.auth.models import User
@@ -129,6 +129,75 @@ def get_run(
         created_at=run.created_at,
         updated_at=run.updated_at,
     )
+
+
+@router.post("/{run_id}/resume", response_model=ResumeResponse)
+def resume_run(
+    run_id: str,
+    body: RunResume,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    if run.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if run.status != "awaiting_input":
+        raise HTTPException(status_code=400, detail="Run is not awaiting input")
+
+    state = run.checkpoint_state or {}
+    run.status = "running"
+    run.checkpoint_state = None
+    db.commit()
+
+    model_adapter = resolve_chat_adapter(run.model_provider_id, settings)
+
+    create_queue(run_id)
+
+    ctx = AgentContext(
+        run_id=run.id,
+        user_id=run.user_id,
+        conversation_id=state.get("conversation_id"),
+        skill_id=state.get("skill_id", run.skill_id),
+        model_provider_id=state.get("model_provider_id"),
+        user_message=state.get("user_message", ""),
+        model_adapter=model_adapter,
+        iteration=state.get("iteration", 0),
+        tool_results=state.get("tool_results", []),
+        structured_output=state.get("structured_output"),
+        human_input=body.choice,
+        human_comment=body.comment,
+    )
+
+    background_tasks.add_task(_resume_run_background, ctx)
+
+    return ResumeResponse(id=run.id, status="running", message="检查点已确认，继续执行")
+
+
+def _resume_run_background(ctx: AgentContext):
+    from app.shared.database import get_session_factory
+
+    factory = get_session_factory()
+    if factory is None:
+        logger.error("Database not initialized for resume background task")
+        emit(ctx.run_id, RunEvent(event_type="stream_closed", data={"run_id": ctx.run_id}))
+        return
+
+    db = factory()
+    try:
+        # 需要加载 skill
+        from app.skills.models import Skill
+        skill = db.query(Skill).filter(Skill.skill_id == ctx.skill_id).first()
+        ctx.skill = skill
+        resume_from_checkpoint(ctx, db)
+    except Exception:
+        logger.exception("Agent run %s resume failed in background", ctx.run_id)
+    finally:
+        db.close()
+        emit(ctx.run_id, RunEvent(event_type="stream_closed", data={"run_id": ctx.run_id}))
 
 
 @router.get("/{run_id}/events")

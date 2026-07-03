@@ -6,6 +6,7 @@ BUILTIN_SKILLS = [
         "category": "recruitment",
         "prompt_template": None,
         "mock_tool_name": "generate_jd",
+        "checkpoints": None,
     },
     {
         "skill_id": "screen_resume",
@@ -14,6 +15,17 @@ BUILTIN_SKILLS = [
         "category": "recruitment",
         "prompt_template": None,
         "mock_tool_name": "screen_resume",
+        "checkpoints": [
+            {
+                "after_tool": "screen_resume",
+                "prompt": "简历筛选完成，请确认下一步操作：",
+                "options": [
+                    {"label": "推进到面试", "value": "proceed_interview"},
+                    {"label": "拒绝候选人", "value": "reject"},
+                    {"label": "需要更多信息", "value": "need_more_info"},
+                ],
+            }
+        ],
     },
     {
         "skill_id": "generate_interview_questions",
@@ -22,6 +34,7 @@ BUILTIN_SKILLS = [
         "category": "recruitment",
         "prompt_template": None,
         "mock_tool_name": "generate_interview_questions",
+        "checkpoints": None,
     },
     {
         "skill_id": "summarize_interview_feedback",
@@ -30,6 +43,18 @@ BUILTIN_SKILLS = [
         "category": "recruitment",
         "prompt_template": None,
         "mock_tool_name": "summarize_interview_feedback",
+        "checkpoints": [
+            {
+                "after_tool": "summarize_interview_feedback",
+                "prompt": "面试反馈已汇总，请确认录用决策：",
+                "options": [
+                    {"label": "发放 Offer", "value": "send_offer"},
+                    {"label": "安排下一轮面试", "value": "next_round"},
+                    {"label": "拒绝候选人", "value": "reject"},
+                    {"label": "暂时搁置", "value": "hold"},
+                ],
+            }
+        ],
     },
     {
         "skill_id": "generate_html",
@@ -38,5 +63,6 @@ BUILTIN_SKILLS = [
         "category": "development",
         "prompt_template": None,
         "mock_tool_name": "generate_html",
+        "checkpoints": None,
     },
 ]

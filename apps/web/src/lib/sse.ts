@@ -8,6 +8,9 @@ export interface RunEventData {
   output?: unknown;
   content?: string;
   error?: string;
+  prompt?: string;
+  options?: { label: string; value: string; description?: string }[];
+  tool_output?: unknown;
   [key: string]: unknown;
 }
 
@@ -19,6 +22,7 @@ export interface RunEventHandlers {
   onToolCompleted?: (data: RunEventData) => void;
   onModelDelta?: (data: RunEventData) => void;
   onStructuredResult?: (data: RunEventData) => void;
+  onCheckpointReached?: (data: RunEventData) => void;
   onRunCompleted?: (data: RunEventData) => void;
   onRunFailed?: (data: RunEventData) => void;
   onStreamClosed?: (data: RunEventData) => void;
@@ -90,6 +94,7 @@ export function subscribeToRunEvents(
   add(entries, "tool_completed", makeHandler("tool_completed", handlers.onToolCompleted));
   add(entries, "model_delta", makeHandler("model_delta", handlers.onModelDelta));
   add(entries, "structured_result", makeHandler("structured_result", handlers.onStructuredResult));
+  add(entries, "checkpoint_reached", makeHandler("checkpoint_reached", handlers.onCheckpointReached, closeOnTerminalEvent));
   add(entries, "run_completed", makeHandler("run_completed", handlers.onRunCompleted, closeOnTerminalEvent));
   add(entries, "run_failed", makeHandler("run_failed", handlers.onRunFailed, closeOnTerminalEvent));
   add(entries, "stream_closed", makeHandler("stream_closed", handlers.onStreamClosed, closeOnTerminalEvent));

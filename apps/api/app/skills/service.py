@@ -1,3 +1,4 @@
+import json as _json
 import logging
 
 from sqlalchemy import or_
@@ -14,8 +15,12 @@ logger = logging.getLogger(__name__)
 
 def seed_builtin_skills(db: Session) -> None:
     for entry in BUILTIN_SKILLS:
+        checkpoints_json = _json.dumps(entry["checkpoints"]) if entry.get("checkpoints") else None
         existing = db.query(Skill).filter(Skill.skill_id == entry["skill_id"]).first()
         if existing is not None:
+            # 更新 checkpoints 配置（如有变化）
+            if existing.checkpoints != checkpoints_json:
+                existing.checkpoints = checkpoints_json
             continue
         skill = Skill(
             skill_id=entry["skill_id"],
@@ -24,6 +29,7 @@ def seed_builtin_skills(db: Session) -> None:
             category=entry.get("category"),
             prompt_template=entry.get("prompt_template"),
             mock_tool_name=entry.get("mock_tool_name"),
+            checkpoints=checkpoints_json,
             visibility="shared",
             source="system",
         )

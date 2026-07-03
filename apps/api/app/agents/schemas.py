@@ -11,6 +11,11 @@ class RunCreate(BaseModel):
     model_provider_id: str | None = None
 
 
+class RunResume(BaseModel):
+    choice: str
+    comment: str | None = None
+
+
 class RunResponse(BaseModel):
     id: str
     conversation_id: str | None
@@ -24,3 +29,9 @@ class RunResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ResumeResponse(BaseModel):
+    id: str
+    status: str
+    message: str

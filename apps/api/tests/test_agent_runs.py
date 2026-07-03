@@ -26,8 +26,15 @@ def _install_skill(db_session, user_email: str, skill_id_str: str) -> tuple[str,
     return user.id, skill.skill_id
 
 
-def _wait_for_completion(client, run_data, token):
-    while run_data["status"] in ("running", "pending"):
+def _wait_for_completion(client, run_data, token, expected_status=None):
+    max_polls = 50
+    for _ in range(max_polls):
+        if expected_status:
+            if run_data["status"] == expected_status:
+                return run_data
+        else:
+            if run_data["status"] not in ("running", "pending"):
+                return run_data
         time.sleep(0.1)
         check = client.get(
             f"/api/agent/runs/{run_data['id']}",
@@ -300,13 +307,26 @@ def test_create_run_with_conversation_and_model(client, db_session, hrbp_token):
     assert resp.status_code == 200
     data = resp.json()
 
-    data = _wait_for_completion(client, data, hrbp_token)
-    assert data["status"] == "completed"
+    data = _wait_for_completion(client, data, hrbp_token, expected_status="awaiting_input")
+    assert data["status"] == "awaiting_input"
     assert data["conversation_id"] == conv.id
     assert data["skill_id"] == skill.id
     assert data["model_provider_id"] == "deepseek"
     assert data["structured_output"] is not None
     assert "screening_dimensions" in data["structured_output"]
+
+    # Resume from checkpoint
+    resume_resp = client.post(
+        f"/api/agent/runs/{data['id']}/resume",
+        json={"choice": "proceed_interview", "comment": "Looks good"},
+        headers={"Authorization": f"Bearer {hrbp_token}"},
+    )
+    assert resume_resp.status_code == 200
+    assert resume_resp.json()["status"] == "running"
+
+    # Wait for final completion (now also waits through awaiting_input → running → completed)
+    data = _wait_for_completion(client, data, hrbp_token, expected_status="completed")
+    assert data["status"] == "completed"
 
 
 def test_get_run_requires_auth(client, db_session):

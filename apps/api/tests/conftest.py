@@ -174,17 +174,35 @@ def fake_chat_adapter():
     class FakeChatAdapter:
         def __init__(self):
             self.last_usage = FakeTokenUsage()
+            self._plan_call_count = 0
 
         def invoke(self, messages, **kwargs):
             full_text = " ".join(m.get("content", "") for m in messages)
-            # 如果系统提示要求结构化 JSON 输出，返回工具 JSON
+
+            # Agent Loop planning prompt（含"决定你的下一步 action"）
+            if "决定你的下一步 action" in full_text or "action.*call_tool" in full_text:
+                self._plan_call_count += 1
+                # 第一次规划：调用 skill 绑定的主工具
+                if self._plan_call_count == 1:
+                    # 优先匹配 "主工具：xxx" 标记
+                    import re as _re
+                    primary_match = _re.search(r"主工具：(\w+)", full_text)
+                    if primary_match:
+                        tool_name = primary_match.group(1)
+                        return _json.dumps({"action": "call_tool", "tool_name": tool_name, "tool_input": "test input"})
+                    # fallback: 逐个检测
+                    for tool_name in ("generate_jd", "screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_html"):
+                        if tool_name in full_text:
+                            return _json.dumps({"action": "call_tool", "tool_name": tool_name, "tool_input": "test input"})
+                    return _json.dumps({"action": "call_tool", "tool_name": "generate_jd", "tool_input": "test"})
+                # 后续规划：直接回复
+                return _json.dumps({"action": "respond", "content": "Based on the tool results, here is my summary."})
+
+            # LLM 工具执行 prompt（含 "Output ONLY valid JSON" 或 "structured data generator"）
             if "Output ONLY valid JSON" in full_text or "structured data generator" in full_text:
-                # 精确匹配工具名称：检查工具描述标记
                 for tool_name in ("screen_resume", "generate_interview_questions", "summarize_interview_feedback", "generate_jd", "generate_html"):
-                    # _build_tool_prompt 会放入 "Your task: <description>"，其中 description 来自 TOOL_SCHEMAS
                     if f'"{tool_name}"' in full_text or f"Screen and evaluate" in full_text and tool_name == "screen_resume":
                         return _json.dumps(_TOOL_OUTPUTS[tool_name])
-                    # 也通过每个工具独有的输出字段名来检查
                     if tool_name == "screen_resume" and "screening_dimensions" in full_text:
                         return _json.dumps(_TOOL_OUTPUTS["screen_resume"])
                     if tool_name == "generate_interview_questions" and "question_groups" in full_text:
@@ -194,8 +212,9 @@ def fake_chat_adapter():
                     if tool_name == "generate_html" and "page specification" in full_text:
                         return _json.dumps(_TOOL_OUTPUTS["generate_html"])
                 return _json.dumps(_TOOL_OUTPUTS["generate_jd"])
-            else:
-                return "This is a summary of the tool output for the HRBP user."
+
+            # 强制总结 / 其他
+            return "This is a summary of the tool output for the HRBP user."
 
     return FakeChatAdapter()
 
