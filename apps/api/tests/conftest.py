@@ -182,6 +182,11 @@ def fake_chat_adapter():
             # Agent Loop planning prompt（含"决定你的下一步 action"）
             if "决定你的下一步 action" in full_text or "action.*call_tool" in full_text:
                 self._plan_call_count += 1
+
+                # 检查点恢复后 或 已有工具调用结果：直接回复
+                if "用户在检查点选择了" in full_text or "[已调用]" in full_text:
+                    return _json.dumps({"action": "respond", "content": "根据工具执行结果，已完成处理。"})
+
                 # 第一次规划：调用 skill 绑定的主工具
                 if self._plan_call_count == 1:
                     # 优先匹配 "主工具：xxx" 标记

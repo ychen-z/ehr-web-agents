@@ -87,6 +87,31 @@ def agent_loop(ctx: AgentContext, db: Session) -> AgentContext:
     registry = get_registry()
     available_tools = _get_available_tools_description(ctx)
 
+    # 第一轮：skill 有主工具且尚未调用过 → 强制调用主工具，跳过 planning
+    primary_tool = (ctx.skill.mock_tool_name or "") if ctx.skill else ""
+    if primary_tool and not ctx.tool_results and not ctx.human_input:
+        if registry.is_allowed(primary_tool):
+            ctx.iteration += 1
+            ctx.emit("loop_iteration", {"iteration": ctx.iteration, "max": MAX_ITERATIONS})
+            result = _execute_tool(ctx, db, primary_tool, ctx.user_message)
+            ctx.tool_results.append({
+                "tool": primary_tool,
+                "input": ctx.user_message,
+                "output": result,
+                "status": "completed",
+            })
+            ctx.structured_output = result
+            ctx.emit("structured_result", {
+                "tool_name": primary_tool,
+                "skill_id": ctx.skill.skill_id,
+                "output": result,
+            })
+            # 检查点
+            checkpoint = _check_checkpoint(ctx.skill, primary_tool)
+            if checkpoint:
+                _pause_at_checkpoint(ctx, db, checkpoint, result)
+                return ctx
+
     while ctx.iteration < MAX_ITERATIONS:
         ctx.iteration += 1
         ctx.emit("loop_iteration", {"iteration": ctx.iteration, "max": MAX_ITERATIONS})
